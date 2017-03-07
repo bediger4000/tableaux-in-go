@@ -1,0 +1,3 @@
+~(aa & bb) = (~aa | ~bb)
+(aa | bb) = (a_a | b_b)
+(aa|bb)=(a_a|b_b)
