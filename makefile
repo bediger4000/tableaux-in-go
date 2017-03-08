@@ -1,3 +1,5 @@
+all: tokentest parsetest
+
 tokentest: tokentest.go src/lexer/lexer.go
 	go build tokentest.go
 
