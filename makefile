@@ -1,5 +1,5 @@
-pl: pl.go src/lexer/lexer.go
-	go build pl.go
+pl: tokentest.go src/lexer/lexer.go
+	go build tokentest.go
 
 clean:
-	-rm -rf pl
+	-rm -rf tokentest
