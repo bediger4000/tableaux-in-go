@@ -1,0 +1,6 @@
+Token "(", type LPAREN, 6
+Token "a", type IDENT, 5
+Token ">", type IMPLIES, 3
+Token "b", type IDENT, 5
+Token ")", type RPAREN, 7
+Token "\n", type EOL, 8

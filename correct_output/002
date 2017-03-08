@@ -1,0 +1,15 @@
+Token "~", type NOT, 0
+Token "(", type LPAREN, 6
+Token "aa", type IDENT, 5
+Token "&", type AND, 1
+Token "bb", type IDENT, 5
+Token ")", type RPAREN, 7
+Token "=", type EQUIV, 4
+Token "(", type LPAREN, 6
+Token "~", type NOT, 0
+Token "aa", type IDENT, 5
+Token "|", type OR, 2
+Token "~", type NOT, 0
+Token "bb", type IDENT, 5
+Token ")", type RPAREN, 7
+Token "\n", type EOL, 8

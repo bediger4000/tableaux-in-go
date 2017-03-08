@@ -1,0 +1,5 @@
+Token "(", type LPAREN, 6
+Token "~", type NOT, 0
+Token "p", type IDENT, 5
+Token ")", type RPAREN, 7
+Token "\n", type EOL, 8
