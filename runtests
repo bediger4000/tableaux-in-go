@@ -1,0 +1,29 @@
+#!/bin/bash
+
+export GOPATH=$PWD
+
+if [[ ! -x ./tokentest ]]
+then
+	make tokentest
+fi
+
+rm -rf test_output
+mkdir test_output
+
+for FNAME in test_input/[0-9][0-9][0-9]
+do
+	INPUT=$(basename $FNAME)
+	./tokentest $FNAME > test_output/$INPUT
+	if [[ -r correct_output/$INPUT ]]
+	then
+		if diff correct_output/$INPUT test_output/$INPUT
+		then
+			:
+		else
+			echo "Problem with $INPUT" >&2
+			exit 2
+		fi
+	else
+		echo "No correct output for $INPUT" >&2
+	fi
+done
