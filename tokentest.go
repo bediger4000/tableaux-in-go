@@ -14,8 +14,9 @@ func main() {
 		lxr = lexer.NewFromFile(os.Stdin)
 	}
 
-	for token, tokenType := lxr.NextToken(); tokenType != lexer.EOF; token, tokenType = lxr.NextToken() {
+	for token, tokenType := lxr.Next(); tokenType != lexer.EOF; token, tokenType = lxr.Next() {
 		fmt.Printf("Token %q, type %s, %d\n", token, lexer.TokenName(tokenType), tokenType)
+		lxr.Consume()
 	}
 
 }
