@@ -1,0 +1,4 @@
+Token "a", type IDENT, 5
+Token "&", type AND, 1
+Token "b", type IDENT, 5
+Token "\n", type EOL, 8
