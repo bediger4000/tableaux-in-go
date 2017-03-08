@@ -2,31 +2,31 @@ package lexer
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"os"
-	"fmt"
 	"unicode/utf8"
 )
 
 type Lexer struct {
-	fileName    string
-	fd      *os.File
-	scanner *bufio.Scanner
+	fileName string
+	fd       *os.File
+	scanner  *bufio.Scanner
 }
 
 type TokenType int
 
 const (
-	NOT  TokenType = iota
-	AND  TokenType = iota
-	OR   TokenType = iota
-	IMPLIES   TokenType = iota
+	NOT     TokenType = iota
+	AND     TokenType = iota
+	OR      TokenType = iota
+	IMPLIES TokenType = iota
 	EQUIV   TokenType = iota
 	IDENT   TokenType = iota
-	LPAREN   TokenType = iota
-	RPAREN   TokenType = iota
-	EOL   TokenType = iota
-	EOF   TokenType = iota
+	LPAREN  TokenType = iota
+	RPAREN  TokenType = iota
+	EOL     TokenType = iota
+	EOF     TokenType = iota
 )
 
 func NewFromFile(file *os.File) *Lexer {
@@ -60,7 +60,7 @@ func (p *Lexer) NextToken() (string, TokenType) {
 				return err.Error(), EOF
 			}
 		} else {
-				return "", EOF
+			return "", EOF
 		}
 	}
 
@@ -93,7 +93,7 @@ func (p *Lexer) NextToken() (string, TokenType) {
 	return token, typ
 }
 
-func TokenName(t TokenType) (string) {
+func TokenName(t TokenType) string {
 	var r string = "unknown"
 	switch t {
 	case LPAREN:
