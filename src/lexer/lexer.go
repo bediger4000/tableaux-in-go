@@ -12,10 +12,6 @@ type Lexer struct {
 	fileName    string
 	fd      *os.File
 	scanner *bufio.Scanner
-
-	pos int
-	line string
-	lineLength int
 }
 
 type TokenType int
@@ -50,81 +46,51 @@ func NewFromFileName(fileName string) *Lexer {
 	}
 	z.fileName = fileName
 	z.scanner = bufio.NewScanner(z.fd)
+	z.scanner.Split(plSplitter)
 	return &z
 }
 
 func (p *Lexer) NextToken() (string, TokenType) {
 
-	if p.lineLength > 0 && p.pos == p.lineLength {
-		p.pos = -1
-		p.lineLength = 0
-		return "", EOL
-	}
-
-	for p.lineLength == 0 {
-		// Read in next line
-		if p.scanner.Scan() {
-			p.line = p.scanner.Text()
-			p.pos = 0
-			p.lineLength = len(p.line)
+	if !p.scanner.Scan() {
+		err := p.scanner.Err()
+		if err != nil {
+			if err := p.scanner.Err(); err != nil {
+				fmt.Fprintf(os.Stderr, "Reading %s: %s\n", p.fileName, err)
+				return err.Error(), EOF
+			}
 		} else {
-			err := p.scanner.Err()
-			if err != nil {
-				if err := p.scanner.Err(); err != nil {
-					fmt.Fprintf(os.Stderr, "Reading %s: %s\n", p.fileName, err)
-					return err.Error(), EOF
-				}
-			} else {
-					return "", EOF
-			}
+				return "", EOF
 		}
 	}
 
-	var token []rune
 	var typ TokenType
-	foundToken := false
 
-	for !foundToken && p.pos < p.lineLength {
-		var c rune
-		c, w := utf8.DecodeRuneInString(p.line[p.pos:])
+	token := p.scanner.Text()
 
-		switch c {
-		case '(', ')', '&', '~', '|', '=':
-			if len(token) == 0 {
-				switch c {
-				case '(':
-					typ = LPAREN
-				case ')':
-					typ = LPAREN
-				case '&':
-					typ = AND
-				case '|':
-					typ = OR
-				case '=':
-					typ = EQUIV
-				case '~':
-					typ = NOT
-				}
-				foundToken = true
-				token = append(token, c)
-				p.pos += w
-			}
-			foundToken = true
-		default:
-			if c == '_' || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9') {
-				typ = IDENT
-				token = append(token, c)
-				p.pos += w
-			}
-		case ' ', '\t':
-			if len(token) > 0 {
-				foundToken = true
-			}
-			p.pos += w
-		}
+	// This is kind bunk, as plSplitter() knows perfectly well what
+	// type the token had, but unless I use a package-level variable,
+	// I can't figure out how to communicate token type from plSplitter()
+	switch token {
+	case "(":
+		typ = LPAREN
+	case ")":
+		typ = RPAREN
+	case "&":
+		typ = AND
+	case "|":
+		typ = OR
+	case ">":
+		typ = IMPLIES
+	case "=":
+		typ = EQUIV
+	case "\n":
+		typ = EOL
+	default:
+		typ = IDENT
 	}
 
-	return string(token), typ
+	return token, typ
 }
 
 func TokenName(t TokenType) (string) {
@@ -152,4 +118,46 @@ func TokenName(t TokenType) (string) {
 		r = "EOF"
 	}
 	return r
+}
+
+func plSplitter(data []byte, atEOF bool) (advance int, token []byte, err error) {
+
+	foundToken := false
+
+	for !foundToken && advance < len(data) {
+		var c rune
+		c, w := utf8.DecodeRune(data[advance:])
+
+		switch c {
+		case '(', ')', '&', '~', '|', '=', '>':
+			if len(token) == 0 {
+				end := advance + w
+				token = append(token, data[advance:end]...)
+				advance = end
+			}
+			foundToken = true
+		case ' ', '\t':
+			if len(token) > 0 {
+				foundToken = true
+			}
+			advance += w
+		case '\n':
+			if len(token) == 0 {
+				end := advance + w
+				token = append(token, data[advance:end]...)
+				advance = end
+			}
+			foundToken = true
+		default:
+			if c == '_' || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9') {
+				end := advance + w
+				token = append(token, data[advance:end]...)
+				advance = end
+			} else {
+				// Skip over meaningless characters
+				advance += w
+			}
+		}
+	}
+	return
 }
