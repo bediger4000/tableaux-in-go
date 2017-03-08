@@ -34,20 +34,18 @@ func NewFromFile(file *os.File) *Lexer {
 	z.fileName = "stdin"
 	z.fd = file
 	z.scanner = bufio.NewScanner(z.fd)
+	z.scanner.Split(plSplitter)
 	return &z
 }
 
 func NewFromFileName(fileName string) *Lexer {
-	var z Lexer
-	var err error
-	z.fd, err = os.Open(fileName)
+	fd, err := os.Open(fileName)
 	if err != nil {
 		log.Fatalf("Opening file %q: %s\n", fileName, err)
 	}
+	z := NewFromFile(fd)
 	z.fileName = fileName
-	z.scanner = bufio.NewScanner(z.fd)
-	z.scanner.Split(plSplitter)
-	return &z
+	return z
 }
 
 func (p *Lexer) NextToken() (string, TokenType) {
@@ -127,11 +125,11 @@ func plSplitter(data []byte, atEOF bool) (advance int, token []byte, err error) 
 	for !foundToken && advance < len(data) {
 		var c rune
 		c, w := utf8.DecodeRune(data[advance:])
+		end := advance + w
 
 		switch c {
 		case '(', ')', '&', '~', '|', '=', '>':
 			if len(token) == 0 {
-				end := advance + w
 				token = append(token, data[advance:end]...)
 				advance = end
 			}
@@ -143,14 +141,12 @@ func plSplitter(data []byte, atEOF bool) (advance int, token []byte, err error) 
 			advance += w
 		case '\n':
 			if len(token) == 0 {
-				end := advance + w
 				token = append(token, data[advance:end]...)
 				advance = end
 			}
 			foundToken = true
 		default:
 			if c == '_' || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9') {
-				end := advance + w
 				token = append(token, data[advance:end]...)
 				advance = end
 			} else {
