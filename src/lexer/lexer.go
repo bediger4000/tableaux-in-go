@@ -12,6 +12,8 @@ type Lexer struct {
 	fileName string
 	fd       *os.File
 	scanner  *bufio.Scanner
+	currentToken string
+	currentType  TokenType
 }
 
 type TokenType int
@@ -35,6 +37,7 @@ func NewFromFile(file *os.File) *Lexer {
 	z.fd = file
 	z.scanner = bufio.NewScanner(z.fd)
 	z.scanner.Split(plSplitter)
+	z.Consume()
 	return &z
 }
 
@@ -48,7 +51,15 @@ func NewFromFileName(fileName string) *Lexer {
 	return z
 }
 
-func (p *Lexer) NextToken() (string, TokenType) {
+func (p *Lexer) Next() (string, TokenType) {
+	return p.currentToken, p.currentType
+}
+
+func (p *Lexer) Consume() {
+	p.currentToken, p.currentType = p.nextToken()
+}
+
+func (p *Lexer) nextToken() (string, TokenType) {
 
 	if !p.scanner.Scan() {
 		err := p.scanner.Err()
