@@ -6,4 +6,4 @@ parsetest: parsetest.go src/lexer/lexer.go src/parser/parser.go src/node/node.go
 
 
 clean:
-	-rm -rf tokentest
+	-rm -rf tokentest parsetest
