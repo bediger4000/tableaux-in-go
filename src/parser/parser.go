@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"lexer"
+	"log"
 	"node"
 )
 
@@ -16,26 +17,19 @@ func New(lexer *lexer.Lexer) *Parser {
 	return &parser
 }
 
-func (p *Parser) Parse() (n *node.Node) {
+func (p *Parser) Parse() (*node.Node) {
+	var n node.Node
+	fmt.Printf("Parse()\n")
+	return &n
+}
 
-	token, typ := p.lexer.NextToken()
-
-	fmt.Printf("%q type %s\n", token, lexer.TokenName(typ))
-
-	switch typ {
-	case lexer.NOT:
-		n = node.NewOpNode(lexer.NOT)
-		n.Left = p.Parse()
-	case lexer.LPAREN:
-		left := p.Parse()
-		n = p.Parse()
-		n.Left = left
-		n.Right = p.Parse()
-		_, _ = p.lexer.NextToken() // should be LPAREN
-	case lexer.AND, lexer.OR, lexer.IMPLIES, lexer.EQUIV:
-		n = node.NewOpNode(typ)
-	case lexer.IDENT:
-		n = node.NewIdentNode(token)
+func (p *Parser) Expect(expectedType lexer.TokenType) (bool) {
+	token, tokenType := p.lexer.Next()
+	if tokenType == expectedType {
+		p.lexer.Consume()
+	} else {
+		log.Printf("Expected token type %s, found %s (%q)\n", lexer.TokenName(expectedType),  lexer.TokenName(tokenType),  token)
+		return false
 	}
-	return n
+	return true
 }
