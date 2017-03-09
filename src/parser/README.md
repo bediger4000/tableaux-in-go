@@ -5,11 +5,11 @@ Recursive descent parser, based on a
 
 ## Grammar
 
-   EQUIVALENCE &rarr; IMPLICATION {"=" IMPLICATION}
-   IMPLICATION &rarr; DISJUNCTION {">" DISJUNCTION}
-   DISJUNCTION &rarr; CONJUNCTION {"|" CONJUNCTION}
-   CONJUNCTION &rarr; FACTOR {"&" FACTOR}
-   FACTOR &rarr; identifier | "(" EQUIVALENCE ")" | "~" FACTOR
+    EQUIVALENCE &rarr; IMPLICATION {"=" IMPLICATION}
+    IMPLICATION &rarr; DISJUNCTION {">" DISJUNCTION}
+    DISJUNCTION &rarr; CONJUNCTION {"|" CONJUNCTION}
+    CONJUNCTION &rarr; FACTOR {"&" FACTOR}
+    FACTOR &rarr; identifier | "(" EQUIVALENCE ")" | "~" FACTOR
 
 The `{something somethingelse}` notation means "a sequence of these types of tokens".
 
