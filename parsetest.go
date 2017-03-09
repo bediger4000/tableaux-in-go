@@ -2,7 +2,8 @@ package main
 
 import (
 	"lexer"
-	"node"
+	"fmt"
+	// "node"
 	"os"
 	"parser"
 )
@@ -17,8 +18,11 @@ func main() {
 
 	psr := parser.New(lxr)
 
-	var tree *node.Node
-	tree = psr.Parse()
+	r := psr.Recognizer()
 
-	tree.Print(os.Stdout)
+	if r {
+		fmt.Printf("It's an expression\n")
+	} else {
+		fmt.Printf("It's NOT an expression\n")
+	}
 }
