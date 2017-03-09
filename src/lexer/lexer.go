@@ -9,11 +9,12 @@ import (
 )
 
 type Lexer struct {
-	fileName string
-	fd       *os.File
-	scanner  *bufio.Scanner
+	fileName     string
+	fd           *os.File
+	scanner      *bufio.Scanner
 	currentToken string
 	currentType  TokenType
+	needsRefresh bool
 }
 
 type TokenType int
@@ -37,26 +38,38 @@ func NewFromFile(file *os.File) *Lexer {
 	z.fd = file
 	z.scanner = bufio.NewScanner(z.fd)
 	z.scanner.Split(plSplitter)
-	z.Consume()
+	z.needsRefresh = true
 	return &z
 }
 
 func NewFromFileName(fileName string) *Lexer {
 	fd, err := os.Open(fileName)
 	if err != nil {
-		log.Fatalf("Opening file %q: %s\n", fileName, err)
+		log.Fatalf("Lexer opening file %q for read: %s\n", fileName, err)
 	}
 	z := NewFromFile(fd)
 	z.fileName = fileName
 	return z
 }
 
+// Next() actually calls lexer.nextToken() if it needs to,
+// rather than having Consume() actually fetch the next token.
+// This allows higher level code to call lexer.Consume() and
+// not have it hang if it reads from stdin or something.
 func (p *Lexer) Next() (string, TokenType) {
+	if (p.needsRefresh) {
+		p.currentToken, p.currentType = p.nextToken()
+		p.needsRefresh = false
+	}
 	return p.currentToken, p.currentType
 }
 
+// Just set a flag to actually refresh on subsequent call to Next():
+// prevent possible hangs. Consume() doesn't really need to fetch
+// the next token, so if it's not available (pipe or stdin), this
+// doesn't cause an apparent hang.
 func (p *Lexer) Consume() {
-	p.currentToken, p.currentType = p.nextToken()
+	p.needsRefresh = true
 }
 
 func (p *Lexer) nextToken() (string, TokenType) {
@@ -65,7 +78,7 @@ func (p *Lexer) nextToken() (string, TokenType) {
 		err := p.scanner.Err()
 		if err != nil {
 			if err := p.scanner.Err(); err != nil {
-				fmt.Fprintf(os.Stderr, "Reading %s: %s\n", p.fileName, err)
+				fmt.Fprintf(os.Stderr, "Lexer reading %s: %s\n", p.fileName, err)
 				return err.Error(), EOF
 			}
 		} else {
@@ -73,14 +86,16 @@ func (p *Lexer) nextToken() (string, TokenType) {
 		}
 	}
 
-	var typ TokenType
-
 	token := p.scanner.Text()
 
-	// This is kind bunk, as plSplitter() knows perfectly well what
+	// This is kind of bunk, as plSplitter() knows perfectly well what
 	// type the token had, but unless I use a package-level variable,
 	// I can't figure out how to communicate token type from plSplitter()
+	// through bufio.Scanner
+	var typ TokenType
 	switch token {
+	case "~":
+		typ = NOT
 	case "(":
 		typ = LPAREN
 	case ")":
@@ -167,4 +182,12 @@ func plSplitter(data []byte, atEOF bool) (advance int, token []byte, err error) 
 		}
 	}
 	return
+}
+
+func BinaryOperator(t TokenType) bool {
+	switch t {
+	case AND, OR, IMPLIES, EQUIV:
+		return true
+	}
+	return false
 }
