@@ -11,14 +11,20 @@ type Parser struct {
 	lexer *lexer.Lexer
 }
 
-func New(lexer *lexer.Lexer) *Parser {
+var nextOp [9]lexer.TokenType
+
+func New(lxr *lexer.Lexer) *Parser {
 	var parser Parser
-	parser.lexer = lexer
+	parser.lexer = lxr
+	nextOp[int(lexer.EQUIV)] = lexer.IMPLIES
+	nextOp[int(lexer.IMPLIES)] = lexer.OR
+	nextOp[int(lexer.OR)] = lexer.AND
+	nextOp[int(lexer.AND)] = lexer.EQUIV
 	return &parser
 }
 
 func (p *Parser) Parse() (*node.Node) {
-	root := p.parseEquivalence()
+	root := p.parseProduction(lexer.EQUIV)
 	if root != nil {
 		q := p.Expect(lexer.EOL)
 		if !q {
@@ -28,63 +34,36 @@ func (p *Parser) Parse() (*node.Node) {
 	return root
 }
 
-func (p *Parser) parseEquivalence() (*node.Node) {
-	n := p.parseImplication()
-	if n != nil {
-		for _, typ := p.lexer.Next(); typ == lexer.EQUIV; _, typ = p.lexer.Next() {
+// See README.md: basically 4 of the 5 productions look like:
+// Nonterminal0 -> Nonterminal1 {op1 Nonterminal1}
+// Nonterminal1 -> Nonterminal2 {op2 Nonterminal2}
+//  ...
+// The code for each parsing method was almost identical, except
+// for the next function to call, and the condition on the for-loop.
+// Generalize all 4 of the parseNonterminal() methods into one method.
+
+func (p *Parser) parseProduction(op lexer.TokenType ) (*node.Node) {
+
+	nextProduction := p.parseProduction
+	if op == lexer.AND {
+		nextProduction = p.parseFactor
+	}
+
+	no := nextOp[op]
+	newNode := nextProduction(no)  // Weird that this works.
+	if newNode != nil {
+		for _, typ := p.lexer.Next(); typ == op; _, typ = p.lexer.Next() {
 			p.lexer.Consume()
-			tmp := node.NewOpNode(lexer.EQUIV)
-			tmp.Left = n
-			tmp.Right = p.parseImplication()
-			n = tmp
+			tmp := node.NewOpNode(op)
+			tmp.Left = newNode
+			tmp.Right = nextProduction(no) // p.parseProduction(no) or p.parseFactor(no)
+			newNode = tmp
 		}
 	}
-	return n
+	return newNode
 }
 
-func (p *Parser) parseImplication() (*node.Node) {
-	n := p.parseDisjunction()
-	if n != nil {
-		for _, typ := p.lexer.Next(); typ == lexer.IMPLIES; _, typ = p.lexer.Next() {
-			p.lexer.Consume()
-			tmp := node.NewOpNode(lexer.IMPLIES)
-			tmp.Left = n
-			tmp.Right = p.parseDisjunction()
-			n = tmp
-		}
-	}
-	return n
-}
-
-func (p *Parser) parseDisjunction() (*node.Node) {
-	n := p.parseConjunction()
-	if n != nil {
-		for _, typ := p.lexer.Next(); typ == lexer.OR; _, typ = p.lexer.Next() {
-			p.lexer.Consume()
-			tmp := node.NewOpNode(lexer.OR)
-			tmp.Left = n
-			tmp.Right = p.parseConjunction()
-			n = tmp
-		}
-	}
-	return n
-}
-
-func (p *Parser) parseConjunction() (*node.Node) {
-	n := p.parseFactor()
-	if n != nil {
-		for _, typ := p.lexer.Next(); typ == lexer.AND; _, typ = p.lexer.Next() {
-			p.lexer.Consume()
-			tmp := node.NewOpNode(lexer.AND)
-			tmp.Left = n
-			tmp.Right = p.parseFactor()
-			n = tmp
-		}
-	}
-	return n
-}
-
-func (p *Parser) parseFactor() (*node.Node) {
+func (p *Parser) parseFactor(op lexer.TokenType) (*node.Node) {
 	var n *node.Node
 
 	token, typ := p.lexer.Next()
@@ -95,7 +74,7 @@ func (p *Parser) parseFactor() (*node.Node) {
 		n = node.NewIdentNode(token)
 	case lexer.LPAREN:
 		p.lexer.Consume()
-		n = p.parseEquivalence()
+		n = p.parseProduction(op)
 		if n != nil {
 			if !p.Expect(lexer.RPAREN) {
 				fmt.Fprintf(os.Stderr, "Didn't find a right paren to match left parenthese\n")
@@ -105,7 +84,7 @@ func (p *Parser) parseFactor() (*node.Node) {
 	case lexer.NOT:
 		p.lexer.Consume()
 		n = node.NewOpNode(lexer.NOT)
-		n.Left = p.parseFactor()
+		n.Left = p.parseFactor(op)
 	default:
 		fmt.Fprintf(os.Stderr, "Found token %q, type %s (%d) instead of IDENT|LPAREN|NOT\n", token, lexer.TokenName(typ), typ)
 		n = nil

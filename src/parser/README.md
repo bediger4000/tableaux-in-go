@@ -5,19 +5,19 @@ Recursive descent parser, based on a
 
 ## Grammar
 
-    EQUIVALENCE &rarr; IMPLICATION {"=" IMPLICATION}
-    IMPLICATION &rarr; DISJUNCTION {">" DISJUNCTION}
-    DISJUNCTION &rarr; CONJUNCTION {"|" CONJUNCTION}
-    CONJUNCTION &rarr; FACTOR {"&" FACTOR}
-    FACTOR &rarr; identifier | "(" EQUIVALENCE ")" | "~" FACTOR
+    EQUIVALENCE -> IMPLICATION {"=" IMPLICATION}
+    IMPLICATION -> DISJUNCTION {">" DISJUNCTION}
+    DISJUNCTION -> CONJUNCTION {"|" CONJUNCTION}
+    CONJUNCTION -> FACTOR {"&" FACTOR}
+    FACTOR -> identifier | "(" EQUIVALENCE ")" | "~" FACTOR
 
 The `{something somethingelse}` notation means "a sequence of these types of tokens".
 
 ## Recognizer Grammar
 
-    E &rarr; P {BINARYOP P}
-    P &rarr; identifier | "(" E ")" | "~" P
-    BINARYOP &rarr; "&" | "|" | ">" | "="
+    E -> P {BINARYOP P}
+    P -> identifier | "(" E ")" | "~" P
+    BINARYOP -> "&" | "|" | ">" | "="
 
 The Recognizer Grammar is quite a bit simpler, so I did it first to get my toes wet,
 and debug `lexer` methods and functions, and `parser` utility functions
