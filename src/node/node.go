@@ -4,36 +4,37 @@ import (
 	"fmt"
 	"io"
 	"lexer"
+	"stringbuffer"
 )
 
 type Node struct {
-	op    lexer.TokenType
-	ident string
+	Op    lexer.TokenType
+	Ident string
 	Left  *Node
 	Right *Node
 }
 
 func NewOpNode(op lexer.TokenType) *Node {
 	var n Node
-	n.op = op
+	n.Op = op
 	return &n
 }
 
 func NewIdentNode(identifier string) *Node {
 	var n Node
-	n.op = lexer.IDENT
-	n.ident = identifier
+	n.Op = lexer.IDENT
+	n.Ident = identifier
 	return &n
 }
 
 func (p *Node) Print(w io.Writer) {
 
-	if lexer.NOT == p.op {
+	if lexer.NOT == p.Op {
 		fmt.Fprintf(w, "~")
 	}
 	if p.Left != nil {
 		printParen := false
-		if p.Left.op != lexer.IDENT && p.Left.op != lexer.NOT {
+		if p.Left.Op != lexer.IDENT && p.Left.Op != lexer.NOT {
 			fmt.Fprintf(w, "(")
 			printParen = true
 		}
@@ -44,7 +45,7 @@ func (p *Node) Print(w io.Writer) {
 	}
 
 	var oper rune
-	switch p.op {
+	switch p.Op {
 	case lexer.IMPLIES:
 		oper = '>'
 		break
@@ -62,13 +63,13 @@ func (p *Node) Print(w io.Writer) {
 		fmt.Fprintf(w, " %c ", oper)
 	}
 
-	if p.op == lexer.IDENT {
-		fmt.Fprintf(w, "%s", p.ident)
+	if p.Op == lexer.IDENT {
+		fmt.Fprintf(w, "%s", p.Ident)
 	}
 
 	if p.Right != nil {
 		printParen := false
-		if p.Right.op != lexer.IDENT && p.Right.op != lexer.NOT {
+		if p.Right.Op != lexer.IDENT && p.Right.Op != lexer.NOT {
 			fmt.Fprintf(w, "(")
 			printParen = true
 		}
@@ -77,4 +78,10 @@ func (p *Node) Print(w io.Writer) {
 			fmt.Fprintf(w, ")")
 		}
 	}
+}
+
+func ExpressionToString(root *Node) (string) {
+	var sb stringbuffer.Buffer
+	root.Print(&sb)
+	return sb.String()
 }
