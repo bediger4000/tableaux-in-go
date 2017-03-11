@@ -1,8 +1,9 @@
-# Propositional Logic Parser in Go
-Read propositional logic expressions, and reprint them, Golang version
+# Prove propositional logic tautologies via Smullyan's tableaux method 
 
-I was able to do a C-language, yacc and lex (bison and flex) 
-[propositional logic expression parser](https://github.com/bediger4000/propositional-logic)
-in a morning. I want to do a larger Golang project than self-replicating programs, or a small
-Alpha-Beta minimaxing game. I'm rewriting the propositional logic expression parser in Go, with
-the added fun of writing a lexer and parser by hand.
+Started with a Golang [parser for propositional logic expressions](https://github.com/bediger4000/propositional-logic-go),
+v2.0 . The idea is to edge up to a tableaux method tautology prover.
+
+1. Write propositional logic parser
+2. Write truth table generator based on the parser
+3. Write single-level tableaux generator
+4. Write full-on tableaux prover 
