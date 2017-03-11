@@ -2,6 +2,7 @@ package lexer
 
 import (
 	"bufio"
+	"io"
 	"fmt"
 	"log"
 	"os"
@@ -10,7 +11,7 @@ import (
 
 type Lexer struct {
 	fileName     string
-	fd           *os.File
+	fd           io.Reader
 	scanner      *bufio.Scanner
 	currentToken string
 	currentType  TokenType
@@ -32,7 +33,7 @@ const (
 	EOF     TokenType = iota
 )
 
-func NewFromFile(file *os.File) *Lexer {
+func NewFromFile(file io.Reader) *Lexer {
 	var z Lexer
 	z.fileName = "stdin"
 	z.fd = file
