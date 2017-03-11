@@ -8,12 +8,15 @@ import (
 	"os"
 	"parser"
 	"sort"
+	"stringbuffer"
 )
 
 func main() {
 	var lxr *lexer.Lexer
 	if len(os.Args) > 1 {
-		lxr = lexer.NewFromFileName(os.Args[1])
+		var expr stringbuffer.Buffer
+		expr.Store(os.Args[1] + "\n")
+		lxr = lexer.NewFromFile(&expr)
 	} else {
 		lxr = lexer.NewFromFile(os.Stdin)
 	}
