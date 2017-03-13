@@ -120,7 +120,7 @@ func evaluateExpression(n *node.Node, valuation map[string]bool) bool {
 	case lexer.IMPLIES:
 		p := evaluateExpression(n.Left, valuation)
 		q := evaluateExpression(n.Right, valuation)
-		if !p && q {
+		if p && !q {
 			return false
 		}
 		return true
