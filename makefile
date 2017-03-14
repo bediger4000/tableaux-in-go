@@ -12,7 +12,11 @@ parsetest: parsetest.go src/lexer/lexer.go src/parser/parser.go src/node/node.go
 truthtable: truthtable.go src/lexer/lexer.go src/parser/parser.go src/node/node.go src/stringbuffer/stringbuffer.go
 	go build truthtable.go
 
+tableaux: tableaux.go src/lexer/lexer.go src/parser/parser.go src/node/node.go \
+	src/stringbuffer/stringbuffer.go src/tableaux/tnode.go
+	go build tableaux.go
+
 
 clean:
-	-rm -rf tokentest parsetest recognizer truthtable
+	-rm -rf tokentest parsetest recognizer truthtable tableaux
 	-rm -rf test_output
