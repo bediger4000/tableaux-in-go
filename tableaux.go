@@ -28,10 +28,41 @@ func main() {
 	root = psr.Parse()
 	fmt.Printf("Expression: %q\n", node.ExpressionToString(root))
 
-	spork := tableaux.New(root, false, nil)
+	tblx := tableaux.New(root, false, nil)
+	tblx.AddInferences(tblx)
+	
+	tautological := false
 
-	spork.DoTnode()
-	spork.PrintTnode()
+	for {
+		tblx.CheckForContradictions()
+
+		var unclosedLeaves []*tableaux.Tnode
+		unclosedLeaves = tableaux.FindUnclosedLeaf(tblx)
+		if len(unclosedLeaves) == 0 {
+			tautological = true
+			break
+		}
+		for _, leaf := range unclosedLeaves {
+			fmt.Printf("Unclosed leaf: %v, %s\n", leaf.Sign, leaf.Expression)
+
+			unusedFormula := leaf.FindTallestUnused()
+			if unusedFormula != nil {
+				fmt.Printf("Unused formula: %v: %s\n", unusedFormula.Sign, unusedFormula.Expression)
+
+				tblx.SubjoinInferences(unusedFormula)
+				unusedFormula.Used = true
+				tblx.PrintTnode()
+				os.Exit(0)
+				break
+			}
+		}
+	}
+
+	if tautological {
+		fmt.Printf("Formula is tautology\n")
+	} else {
+		fmt.Printf("Formula is not a tautology\n")
+	}
 
 	os.Exit(0)
 }
