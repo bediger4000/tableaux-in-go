@@ -137,6 +137,46 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 		return
 	}
 
+	// Not actually a beta-type, and Smullyan probably would seems rather
+	// define equivalance as an abbreviation.
+	if from.tree.Op == lexer.EQUIV {
+
+		var sign1, sign2, sign3, sign4 bool
+		if from.Sign == true {
+			sign1, sign2, sign3, sign4 = true, true, false, false
+		} else {
+			sign1, sign2, sign3, sign4 = true, false, false, true
+		}
+
+		immediate1 := New(from.tree.Left, sign1, parent)
+		parent.Left = immediate1
+		fmt.Printf("Adding %v: %q below of %v: %q\n", immediate1.Sign, immediate1.Expression, parent.Sign, parent.Expression)
+
+		if !immediate1.CheckForContradictions() {
+
+			immediate2 := New(from.tree.Right, sign2, immediate1)
+			immediate1.Left = immediate2
+			fmt.Printf("Adding %v: %q below of %v: %q\n", immediate2.Sign, immediate2.Expression, immediate1.Sign, immediate1.Expression)
+
+			immediate2.CheckForContradictions()
+		}
+
+		immediate3 := New(from.tree.Left, sign3, parent)
+		parent.Right = immediate3
+		fmt.Printf("Adding %v: %q below of %v: %q\n", immediate3.Sign, immediate3.Expression, parent.Sign, parent.Expression)
+
+		if !immediate3.CheckForContradictions() {
+
+			immediate4 := New(from.tree.Right, sign4, immediate3)
+			immediate3.Left = immediate4
+			fmt.Printf("Adding %v: %q below of %v: %q\n", immediate4.Sign, immediate4.Expression, immediate3.Sign, immediate3.Expression)
+
+			immediate4.CheckForContradictions()
+		}
+
+		return
+	}
+
 	// Smullyan's alpha-type
 	if from.tree.Op == lexer.NOT {
 		immediate := New(from.tree.Left, !from.Sign, parent)
