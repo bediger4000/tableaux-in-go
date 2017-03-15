@@ -26,34 +26,38 @@ func main() {
 
 	var root *node.Node
 	root = psr.Parse()
-	fmt.Printf("Expression: %q\n", node.ExpressionToString(root))
+	fmt.Printf("/*\nExpression: %q\n", node.ExpressionToString(root))
 
 	tblx := tableaux.New(root, false, nil)
 	tblx.AddInferences(tblx)
+	tblx.Used = true
 	
 	tautological := false
+	foundUnused  := true
 
-	for {
-		tblx.CheckForContradictions()
-
+	for foundUnused {
 		var unclosedLeaves []*tableaux.Tnode
 		unclosedLeaves = tableaux.FindUnclosedLeaf(tblx)
 		if len(unclosedLeaves) == 0 {
+			fmt.Printf("No unclosed branches\n")
 			tautological = true
 			break
 		}
+		foundUnused = false
 		for _, leaf := range unclosedLeaves {
-			fmt.Printf("Unclosed leaf: %v, %s\n", leaf.Sign, leaf.Expression)
 
+fmt.Printf("Unclosed leaf, %v: %q\n", leaf.Sign, leaf.Expression)
 			unusedFormula := leaf.FindTallestUnused()
 			if unusedFormula != nil {
-				fmt.Printf("Unused formula: %v: %s\n", unusedFormula.Sign, unusedFormula.Expression)
-
-				tblx.SubjoinInferences(unusedFormula)
+fmt.Printf("Unused formula above leaf: %v: %q\n", unusedFormula.Sign, unusedFormula.Expression)
+				uncl := tableaux.FindUnclosedLeaf(unusedFormula)
+				// uncl should have leaf as an element
+				for _, leafNode := range uncl {
+					leafNode.AddInferences(unusedFormula)
+				}
+				foundUnused = true
 				unusedFormula.Used = true
-				tblx.PrintTnode()
-				os.Exit(0)
-				break
+				break // Just subjoined inferences to each unclosed leaf node
 			}
 		}
 	}
@@ -63,6 +67,9 @@ func main() {
 	} else {
 		fmt.Printf("Formula is not a tautology\n")
 	}
+
+	fmt.Printf("\n*/\n")
+	tblx.GraphTnode(os.Stdout)
 
 	os.Exit(0)
 }
