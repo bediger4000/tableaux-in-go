@@ -55,7 +55,7 @@ func (n *Tnode)FirstUnused() (*Tnode) {
 // Find an unclosed leaf node - it might
 // be marked "used" if it's just an identifier,
 // also can return nil if all leaf nodes marked closed
-func FindUnclosedLeaf(n *Tnode) ([]*Tnode) {
+func (n *Tnode) FindUnclosedLeaf() ([]*Tnode) {
 	var a []*Tnode
 	if n.Left == nil && n.Right == nil {
 		if !n.closed {
@@ -63,11 +63,11 @@ func FindUnclosedLeaf(n *Tnode) ([]*Tnode) {
 		}
 	}
 	if n.Left != nil {
-		t := FindUnclosedLeaf(n.Left)
+		t := n.Left.FindUnclosedLeaf()
 		a = append(a, t...)
 	}
 	if n.Right != nil {
-		t := FindUnclosedLeaf(n.Right)
+		t := n.Right.FindUnclosedLeaf()
 		a = append(a, t...)
 	}
 	return a
