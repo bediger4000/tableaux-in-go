@@ -2,6 +2,7 @@ package tableaux
 
 import (
 	"fmt"
+	"io"
 	"lexer"
 	"node"
 )
@@ -22,6 +23,9 @@ func New(tree *node.Node, sign bool, parent *Tnode) (*Tnode) {
 
 	r.tree = tree
 	r.Used = false
+	if tree.Op == lexer.IDENT {
+		r.Used = true
+	}
 	r.closed = false
 	r.Parent = parent
 	r.Sign = sign
@@ -73,132 +77,132 @@ func FindUnclosedLeaf(n *Tnode) ([]*Tnode) {
 func (n *Tnode) FindTallestUnused() *Tnode {
 	// Walk linked list formed by Tnode.Parent pointers
 	var p *Tnode
-	for p = n.Parent; p != nil; p = p.Parent {
-		if p.Used {
-			break
+	var unused *Tnode
+	for p = n; p != nil; p = p.Parent {
+		if !p.Used {
+			unused = p
 		}
 	}
-	// If p == nil, got to root w/o finding an unused formula
-	return p
+	return unused
 }
 
-func (n *Tnode) CheckForContradictions() {
-	if n.Left != nil {
-		n.Left.CheckForContradictions()
-	}
-	if n.Left == nil && n.Right == nil {
-		if !n.closed {
-			for p := n.Parent; p.Parent != nil; p = p.Parent {
-				if n.Sign != p.Sign && n.Expression == p.Expression {
-					n.closed = true
-				}
-			}
+func (n *Tnode) CheckForContradictions() bool {
+	for p := n.Parent; p != nil; p = p.Parent {
+		if n.Sign != p.Sign && n.Expression == p.Expression {
+			fmt.Printf("Leaf %v: %q contradicted by ancestor %v: %q\n", n.Sign, n.Expression, p.Sign, p.Expression)
+			n.closed = true
+			return true
 		}
 	}
-	if n.Right != nil {
-		n.Right.CheckForContradictions()
-	}
+	return false
 }
 
-func (n *Tnode) SubjoinInferences(unused *Tnode) {
-	if n.Left == nil && n.Right == nil {
-		if !n.closed {
-			n.AddInferences(unused)
-		}
-		return
-	}
-	if n.Left != nil {
-		n.Left.SubjoinInferences(unused)
-	}
-	if n.Right != nil {
-		n.Right.SubjoinInferences(unused)
-	}
-}
+func (parent *Tnode) AddInferences(from *Tnode) {
 
-func (parent *Tnode) AddInferences(p *Tnode) {
-
-	if p.tree.Op == lexer.IDENT {
-		return
-	}
-
-	// Smullyan's alpha-type first
-	if p.tree.Op == lexer.NOT {
-		immediate := New(p.tree.Left, !p.Sign, parent)
-		if p.Left != nil {
-			tmp := p.Left
-			tmp.Parent = immediate
-			immediate.Left = tmp
-		}
-		p.Left = immediate
-		return
-	}
-
-	if (p.tree.Op == lexer.AND && p.Sign == true) || (p.tree.Op == lexer.OR && p.Sign == false) {
-		immediate := New(p.tree.Left, p.Sign, parent)
-		if p.Left != nil {
-			tmp := p.Left
-			tmp.Parent = immediate
-			immediate.Left = tmp
-		}
-		p.Left = immediate
-		immediate2 := New(p.tree.Right, p.Sign, immediate)
-		if immediate.Left != nil {
-			tmp := immediate.Left
-			tmp.Parent = immediate2
-			immediate2.Left = tmp
-		}
-		immediate.Left = immediate2
-		return
-	}
-
-	if p.tree.Op == lexer.IMPLIES && p.Sign == false {
-		immediate := New(p.tree.Left, true, parent)
-		if p.Left != nil {
-			tmp := p.Left
-			tmp.Parent = immediate
-			immediate.Left = tmp
-		}
-		p.Left = immediate
-		immediate2 := New(p.tree.Right, false, immediate)
-		if immediate.Left != nil {
-			tmp := immediate.Left
-			tmp.Parent = immediate2
-			immediate2.Left = tmp
-		}
-		immediate.Left = immediate2
+	if from.tree.Op == lexer.IDENT {
 		return
 	}
 
 	// Smullyan's beta-type
-	if (p.tree.Op == lexer.AND && p.Sign == false) || (p.tree.Op == lexer.OR && p.Sign == true) {
-		immediate := New(p.tree.Left, p.Sign, parent)
-		if p.Left != nil {
-			tmp := p.Left
-			tmp.Parent = immediate
-			immediate.Left = tmp
-		}
-		p.Left = immediate
 
-		immediate2 := New(p.tree.Right, p.Sign, parent)
-		p.Right = immediate2
+	if (from.tree.Op == lexer.AND && from.Sign == false) || (from.tree.Op == lexer.OR && from.Sign == true) {
+		immediate := New(from.tree.Left, from.Sign, parent)
+		parent.Left = immediate
+		fmt.Printf("Adding %v: %q left of %v: %q\n", immediate.Sign, immediate.Expression, parent.Sign, parent.Expression)
+
+		immediate.CheckForContradictions()
+
+		immediate2 := New(from.tree.Right, from.Sign, parent)
+		fmt.Printf("Adding %v: %q right of %v: %q\n", immediate2.Sign, immediate2.Expression, parent.Sign, parent.Expression)
+		parent.Right = immediate2
+
+		immediate2.CheckForContradictions()
+
+		return
+	}
+
+	if from.tree.Op == lexer.IMPLIES && from.Sign == true {
+		immediate := New(from.tree.Left, false, parent)
+		parent.Left = immediate
+		fmt.Printf("Adding %v: %q left of %v: %q\n", immediate.Sign, immediate.Expression, parent.Sign, parent.Expression)
+
+		immediate.CheckForContradictions()
+
+		immediate2 := New(from.tree.Right, true, parent)
+		parent.Right = immediate2
+		fmt.Printf("Adding %v: %q right of %v: %q\n", immediate2.Sign, immediate2.Expression, parent.Sign, parent.Expression)
+
+		immediate2.CheckForContradictions()
 
 		return
 	}
 
-	if p.tree.Op == lexer.IMPLIES && p.Sign == true {
-		immediate := New(p.tree.Left, false, parent)
-		if p.Left != nil {
-			tmp := p.Left
-			tmp.Parent = immediate
-			immediate.Left = tmp
-		}
-		p.Left = immediate
+	// Smullyan's alpha-type
+	if from.tree.Op == lexer.NOT {
+		immediate := New(from.tree.Left, !from.Sign, parent)
+		parent.Left = immediate
+		fmt.Printf("Adding %v: %q below of %v: %q\n", immediate.Sign, immediate.Expression, parent.Sign, parent.Expression)
 
-		immediate2 := New(p.tree.Right, true, parent)
-		p.Right = immediate2
+		parent.Left.CheckForContradictions()
+		return
+	}
+
+	if (from.tree.Op == lexer.AND && from.Sign == true) || (from.tree.Op == lexer.OR && from.Sign == false) {
+		immediate := New(from.tree.Left, from.Sign, parent)
+		parent.Left = immediate
+		fmt.Printf("Adding %v: %q below of %v: %q\n", immediate.Sign, immediate.Expression, parent.Sign, parent.Expression)
+
+		if !immediate.CheckForContradictions() {
+
+			immediate2 := New(from.tree.Right, from.Sign, immediate)
+			immediate.Left = immediate2
+			fmt.Printf("Adding %v: %q below of %v: %q\n", immediate2.Sign, immediate2.Expression, immediate.Sign, immediate.Expression)
+
+			immediate2.CheckForContradictions()
+		}
 
 		return
 	}
+
+	if from.tree.Op == lexer.IMPLIES && from.Sign == false {
+		parent.Left = New(from.tree.Left, true, parent)
+		fmt.Printf("Adding %v: %q below of %v: %q\n", parent.Left.Sign, parent.Left.Expression, parent.Sign, parent.Expression)
+		if ! parent.Left.CheckForContradictions() {
+
+			parent.Left.Left = New(from.tree.Right, false, parent.Left)
+			fmt.Printf("Adding %v: %q below of %v: %q\n", parent.Left.Left.Sign, parent.Left.Left.Expression, parent.Left.Sign, parent.Left.Expression)
+			parent.Left.Left.CheckForContradictions()
+		}
+
+		return
+	}
+}
+
+func (p *Tnode) graphTnode(w io.Writer) {
+	sign := "F"
+	if p.Sign { sign = "T" }
+	extra := ""
+	if p.Used {
+		extra += " U"
+	}
+	if p.closed {
+		extra += " C"
+	}
+	fmt.Fprintf(w, "n%p [label=\"%s: %s%s\"];\n", p, sign, p.Expression, extra)
+	if p.Left != nil {
+		p.Left.graphTnode(w)
+		fmt.Fprintf(w, "n%p -> n%p;\n", p, p.Left)
+	}
+	if p.Right != nil {
+		p.Right.graphTnode(w)
+		fmt.Fprintf(w, "n%p -> n%p;\n", p, p.Right)
+	}
+}
+
+func (p *Tnode) GraphTnode(w io.Writer) {
+	fmt.Fprintf(w, "digraph g {\n")
+	p.graphTnode(w)
+	fmt.Fprintf(w, "}\n")
 }
 
 func (p *Tnode) PrintTnode() {
