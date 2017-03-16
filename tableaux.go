@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"lexer"
 	"log"
@@ -13,25 +14,47 @@ import (
 )
 
 func main() {
-	var lxr *lexer.Lexer
-	if len(os.Args) > 1 {
-		var expr stringbuffer.Buffer
-		expr.Store(os.Args[1] + "\n")
-		lxr = lexer.NewFromFile(&expr)
-	} else {
-		lxr = lexer.NewFromFile(os.Stdin)
+
+	graphVizOutputFilename := flag.String("g", "", "File name for graphviz output, no default")
+	flag.Parse()
+
+	var expressions []string
+
+	if flag.NArg() > 0 {
+		expressions = flag.Args()
 	}
 
-	psr := parser.New(lxr)
+	if len(expressions) == 0 {
+		os.Exit(1)
+	}
 
-	var root *node.Node
-	root = psr.Parse()
-	fmt.Printf("/*\nExpression: %q\n", node.ExpressionToString(root))
+	var trees []*node.Node
+
+	for _, expression := range expressions {
+		var lxr *lexer.Lexer
+		var expr stringbuffer.Buffer
+		expr.Store(expression + "\n")
+		lxr = lexer.NewFromFile(&expr)
+		psr := parser.New(lxr)
+		tree := psr.Parse()
+		fmt.Printf("Expression: %q\n", node.ExpressionToString(tree))
+		trees = append(trees, tree)
+	}
 
 	// tblx will become the entire tableaux, below
-	tblx := tableaux.New(root, false, nil)
-	tblx.AddInferences(tblx)
-	tblx.Used = true
+	tblx := tableaux.New(trees[0], false, nil)
+
+	if len(trees) > 1 {
+		var t *tableaux.Tnode
+		for _, tree := range trees {
+			t = tableaux.New(tree, true, nil)
+			tblx.AppendLeaf(t)
+		}
+		t.Sign = false
+	} else {
+		tblx.AddInferences(tblx)
+		tblx.Used = true
+	}
 	
 	tautological := false
 	foundUnused  := true
@@ -73,7 +96,16 @@ fmt.Printf("Unused formula above leaf: %v: %q\n", unusedFormula.Sign, unusedForm
 	}
 
 	fmt.Printf("\n*/\n")
-	tblx.GraphTnode(os.Stdout)
+
+	if *graphVizOutputFilename != "" {
+		fout, err := os.OpenFile(*graphVizOutputFilename, os.O_WRONLY|os.O_CREATE, 0666)
+		if err != nil {
+			log.Printf("Problem opening %d write-only: %s\n", *graphVizOutputFilename, err)
+			os.Exit(1)
+		}
+		defer fout.Close()
+		tblx.GraphTnode(fout)
+	}
 
 	os.Exit(0)
 }
