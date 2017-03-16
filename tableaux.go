@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"lexer"
@@ -9,7 +10,6 @@ import (
 	"os"
 	"parser"
 	"sort"
-	"stringbuffer"
 	"tableaux"
 )
 
@@ -25,16 +25,17 @@ func main() {
 	}
 
 	if len(expressions) == 0 {
+		fmt.Fprintf(os.Stderr, "Need at least one propostitional logic formula on command line\n")
 		os.Exit(1)
 	}
 
+	// Parse expression(s) on cmd line into *node.Node objects
 	var trees []*node.Node
 
 	for _, expression := range expressions {
 		var lxr *lexer.Lexer
-		var expr stringbuffer.Buffer
-		expr.Store(expression + "\n")
-		lxr = lexer.NewFromFile(&expr)
+		expr := bytes.NewBufferString(expression+"\n")  // parser.Parser needs to recognize end-of-line
+		lxr = lexer.NewFromFile(expr)
 		psr := parser.New(lxr)
 		tree := psr.Parse()
 		fmt.Printf("Expression: %q\n", node.ExpressionToString(tree))
@@ -45,19 +46,22 @@ func main() {
 	tblx := tableaux.New(trees[0], false, nil)
 
 	if len(trees) > 1 {
+		// More than 1 PL formula, put them together for deciding
+		// logical consequence - all signed T except that last one F.
 		var t *tableaux.Tnode
 		for _, tree := range trees {
-			t = tableaux.New(tree, true, nil)
+			t = tableaux.New(tree, true, nil)  // All signed T
 			tblx.AppendLeaf(t)
 		}
-		t.Sign = false
+		t.Sign = false  // Except final one, signed F
 	} else {
+		// Single expression. Subjoin its own inferences.
 		tblx.AddInferences(tblx)
 		tblx.Used = true
 	}
 	
-	tautological := false
-	foundUnused  := true
+	tautological := false  // The answer we're looking for.
+	foundUnused  := true   // Found a formula with no previously subjoined inferences
 
 	for foundUnused {
 		unclosedLeaves := tblx.FindUnclosedLeaf()

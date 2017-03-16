@@ -1,10 +1,10 @@
 package node
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"lexer"
-	"stringbuffer"
 )
 
 type Node struct {
@@ -81,7 +81,7 @@ func (p *Node) Print(w io.Writer) {
 }
 
 func ExpressionToString(root *Node) (string) {
-	var sb stringbuffer.Buffer
+	var sb bytes.Buffer
 	root.Print(&sb)
 	return sb.String()
 }
