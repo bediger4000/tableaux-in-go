@@ -20,7 +20,8 @@ The `{something somethingelse}` notation means "a sequence of these types of tok
     BINARYOP -> "&" | "|" | ">" | "="
 
 The Recognizer Grammar is quite a bit simpler, so I did it first to get my toes wet,
-and debug `lexer` methods and functions, and `parser` utility functions
+and debug `lexer` methods and functions, and `parser` utility functions. This leads
+directly to the recognizer.go program.
 
 ## Notes
 

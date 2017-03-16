@@ -1,5 +1,14 @@
 package tableaux
 
+
+// Smullyan's Analytic Tableaux, as a Go type.
+// See:
+// "A Beginner's Guide to Mathematical Logic", Dover, 2014, chapter 6
+// "Logical Labyrinths", 
+// "First Order Logic", Dover, xxxx, chapter N
+// for essentially the same explanation with slight variations.
+// This does signed tableaux.
+
 import (
 	"fmt"
 	"io"
@@ -8,23 +17,28 @@ import (
 )
 
 type Tnode struct {
+	// Set in New(), should never get changed
 	Sign       bool
 	Tree       *node.Node
-	Expression string
+	Expression string  // Tree element as a string.
+
+	// Changed during subjoining inferences, and initial setup.
 	Parent     *Tnode
 	Left       *Tnode
 	Right      *Tnode
-	Used       bool
-	closed     bool
+
+	Used       bool    // Have interence(s) of this expression been subjoined to leaf nodes?
+	closed     bool    // Does this expression contradict a predecessor in the tableaux?
 }
 
+// Should constitute the only way to create a Tnode instance.
 func New(tree *node.Node, sign bool, parent *Tnode) (*Tnode) {
 	var r Tnode
 
 	r.Tree = tree
 	r.Used = false
 	if tree.Op == lexer.IDENT {
-		r.Used = true
+		r.Used = true  // No inferences to make from an identifier.
 	}
 	r.closed = false
 	r.Parent = parent
@@ -34,27 +48,9 @@ func New(tree *node.Node, sign bool, parent *Tnode) (*Tnode) {
 	return &r
 }
 
-// Returns nil if it can't find an unused expression
-func (n *Tnode)FirstUnused() (*Tnode) {
-
-	if n == nil {
-		return nil
-	}
-
-	if !n.Used {
-		return n
-	}
-	var r *Tnode
-	r = n.Left.FirstUnused()
-	if r == nil {
-		r = n.Right.FirstUnused()
-	}
-	return r
-}
-
-// Find an unclosed leaf node - it might
+// Find all unclosed leaf node(s). Leaf might
 // be marked "used" if it's just an identifier,
-// also can return nil if all leaf nodes marked closed
+// also this can return zero-len array if all leaf nodes marked closed
 func (n *Tnode) FindUnclosedLeaf() ([]*Tnode) {
 	var a []*Tnode
 	if n.Left == nil && n.Right == nil {
@@ -73,11 +69,17 @@ func (n *Tnode) FindUnclosedLeaf() ([]*Tnode) {
 	return a
 }
 
-// Find an unused formala above an unclosed leaf node
+// Find an unused formula above an unclosed leaf node
+// by following the Tnode.Parent links up a branch.
 func (n *Tnode) FindTallestUnused() *Tnode {
-	// Walk linked list formed by Tnode.Parent pointers
 	var p *Tnode
 	var unused *Tnode
+
+	// Have to consider n (the unclosed leaf node itself)
+	// as it might be the only unused Tnode in the branch.
+	// Also have to walk Tnode.Parent chain all the way up
+	// to the root of the tableaux, because IDENT node.Node
+	// objects can appear below an unused node.Node in a branch.
 	for p = n; p != nil; p = p.Parent {
 		if !p.Used {
 			unused = p
@@ -86,6 +88,10 @@ func (n *Tnode) FindTallestUnused() *Tnode {
 	return unused
 }
 
+// Follow Tnode.Parent links all the way up a branch of a tableaux
+// to try to find a contradiction to a Tnode instance n. Not recursive,
+// so the receiver n is the expression possibly contradicted by element
+// further back up the tableaux branch.
 func (n *Tnode) CheckForContradictions() bool {
 	for p := n.Parent; p != nil; p = p.Parent {
 		if n.Sign != p.Sign && n.Expression == p.Expression {
@@ -97,13 +103,18 @@ func (n *Tnode) CheckForContradictions() bool {
 	return false
 }
 
+// Subjoin inferences of from to Tnode instance named parent.
 func (parent *Tnode) AddInferences(from *Tnode) {
 
 	if from.Tree.Op == lexer.IDENT {
 		return
 	}
 
-	// Smullyan's beta-type
+	// Smullyan's beta-type, and logical equivalence. These create
+	// bifurcations in branches, so do them first. Alpha-type inferences,
+	// which just linearly extend a branch, push inferences down the branch.
+	// By doing beta-type, bifurcating inferences first, branches are made
+	// linearly as long as possible.
 
 	if (from.Tree.Op == lexer.AND && from.Sign == false) || (from.Tree.Op == lexer.OR && from.Sign == true) {
 		immediate := New(from.Tree.Left, from.Sign, parent)
@@ -138,7 +149,8 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 	}
 
 	// Not actually a beta-type, and Smullyan probably would seems rather
-	// define equivalance as an abbreviation.
+	// define equivalance as an abbreviation. It does create a new bifurcation
+	// in a branch, however.
 	if from.Tree.Op == lexer.EQUIV {
 
 		var sign1, sign2, sign3, sign4 bool
@@ -177,7 +189,11 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 		return
 	}
 
-	// Smullyan's alpha-type
+	// Smullyan's alpha-type inferences. These just extend a branch, without bifurcating it.
+	// For AND, OR, IMPLIES alpha-type inferences, add the 2nd of two inferences immediately
+	// below the parent. Combined with doing beta-type, bifurcating inferencese first, this
+	// keeps the branch linear for as long as possible.
+
 	if from.Tree.Op == lexer.NOT {
 		immediate := New(from.Tree.Left, !from.Sign, parent)
 		parent.Left = immediate
@@ -192,6 +208,8 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 		parent.Left = immediate
 		fmt.Printf("Adding %v: %q below of %v: %q\n", immediate.Sign, immediate.Expression, parent.Sign, parent.Expression)
 
+		// Check 1st inference for contradictions, don't bother subjoining 2nd inference
+		// if 1st one has a contradction and closes the branch.
 		if !immediate.CheckForContradictions() {
 
 			immediate2 := New(from.Tree.Right, from.Sign, immediate)
@@ -204,6 +222,8 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 		return
 	}
 
+	// Material implication causes a special case: F: p>q means that T:p and F:q get subjoined,
+	// preventing the general alpha-type code above from working.
 	if from.Tree.Op == lexer.IMPLIES && from.Sign == false {
 		parent.Left = New(from.Tree.Left, true, parent)
 		fmt.Printf("Adding %v: %q below of %v: %q\n", parent.Left.Sign, parent.Left.Expression, parent.Sign, parent.Expression)
@@ -216,9 +236,15 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 
 		return
 	}
+
+	// Don't think it should ever get here.
+	panic("Trying to add inferences of %v:%q to leaf node %v:%q\n", from.Sign, from.Expression, parent.Sign, parent.Expression)
 }
 
 // The actual work of writing GraphViz digraph output to w.
+// Another traverse of tableaux (binary tree of *Tnode instances),
+// with semantic irregularities causing some inorder and some postorder
+// operations.
 // The Tnode.Parent backlink can help in debugging.
 func (p *Tnode) graphTnode(w io.Writer) {
 	sign := "F"
@@ -258,7 +284,7 @@ func (p *Tnode) GraphTnode(w io.Writer) {
 	fmt.Fprintf(w, "}\n")
 }
 
-// Find the leaf node of some node p.
+// Find the leaf node of some node p in a branch of a tableaux.
 // This assumes that there's just a linked list
 // via Tnode.Left elements. Used only in setting up
 // the hypotheses for finding consequences of a list
@@ -272,6 +298,7 @@ func (p *Tnode) AppendLeaf(n *Tnode) {
 	n.Parent = leaf
 }
 
+// Shouldn't this just make Tnode match type Stringer?
 func (p *Tnode) PrintTnode() {
 	fmt.Printf("Tnode %p\n", p)
 	fmt.Printf("\ttree %p\n", p.Tree)
