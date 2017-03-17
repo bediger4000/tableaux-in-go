@@ -1,8 +1,53 @@
 # Prove propositional logic tautologies via Smullyan's analytic tableaux method 
 
+* `|` - logical or
+* `&` - logical and
+* `>` - material implication
+* `=` - logical equivalence
+
 ## Something
 
-## Something else!
+## Parsing and Lexing
+
+See [package parser README]90  for details on this topic.
+
+## Data structure for tableaux
+
+Incautious reading any of the 3 Smullyan books  above on analytic tableaux would have you
+believe that an analytic tableaux consists of arrays of subexpressions of the propositional
+logic formula to be proved. Smullyan was not a programmer, it seems, because a tableaux is
+a binary tree of individual subexpressions. The sign part of an analytic tableaux is attached
+to a subexpression, as is the notion of an unused formula, and whether a branch is closed or not.
+
+    type Tnode struct {
+        Sign       bool
+        Tree       *node.Node
+        Expression string
+    
+        Parent     *Tnode
+        Left       *Tnode
+        Right      *Tnode
+    
+        Used       bool
+        closed     bool
+    }
+
+The `Sign` and `Expression` members of this struct identify a node in a tableau. Apparent duplicate 
+nodes can appear in a tableau, because the logic-not handling for a program is more literal than
+for a human. Because the proof procedure checks for contractions with previous subexpressions in
+a tableau branch, a node has to have a link back to its "parent" in the tableau. Only the root
+node of a tableau's binary tree has a nil value for `Parent`. Each node in a tableau keeps a pointer
+to the node of a parse tree that corresponds to the tableau node itself. Subjoining inferences
+to leaf nodes of a branch uses the principal connective of its pare tree pointer to decide
+how to subjoin (linearly or bifurcate), and the sign of the subjoined expressions.
+
+Typing `Tnode.Sign` as a Golang boolean is semantically obvious: the signs of expressions
+in Smullyan's tableaux are 'T' or 'F', but internally, a program could use 0 and 1, or even
+two different strings. Checking two lines in a tableau (two nodes in a binary tree) for
+contradiction only involves non-equality of the `Sign` element, and string equality of the
+`Expression` element. A program could check the `Tree` elements for tree-equality, but since
+`tableaux.Print()` canonicalizes string representations of tableau binary trees, string equality
+is sufficient.
 
 ## Software engineering notes
 
