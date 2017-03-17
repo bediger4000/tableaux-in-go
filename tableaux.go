@@ -104,7 +104,7 @@ fmt.Printf("Unused formula above leaf: %v: %q\n", unusedFormula.Sign, unusedForm
 	if *graphVizOutputFilename != "" {
 		fout, err := os.OpenFile(*graphVizOutputFilename, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
-			log.Printf("Problem opening %d write-only: %s\n", *graphVizOutputFilename, err)
+			log.Printf("Problem opening %q write-only: %s\n", *graphVizOutputFilename, err)
 			os.Exit(1)
 		}
 		defer fout.Close()
