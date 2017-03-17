@@ -1,10 +1,9 @@
+// Smullyan's Analytic Tableaux, as a Go type.
 package tableaux
 
-
-// Smullyan's Analytic Tableaux, as a Go type.
 // See:
 // "A Beginner's Guide to Mathematical Logic", Dover, 2014, chapter 6
-// "Logical Labyrinths", 
+// "Logical Labyrinths", CRC Press, 2009, chapter 11
 // "First Order Logic", Dover, xxxx, chapter N
 // for essentially the same explanation with slight variations.
 // This does signed tableaux.
@@ -20,7 +19,7 @@ type Tnode struct {
 	// Set in New(), should never get changed
 	Sign       bool
 	Tree       *node.Node
-	Expression string  // Tree element as a string.
+	Expression string  // element Tree as a string.
 
 	// Changed during subjoining inferences, and initial setup.
 	Parent     *Tnode
@@ -28,10 +27,10 @@ type Tnode struct {
 	Right      *Tnode
 
 	Used       bool    // Have interence(s) of this expression been subjoined to leaf nodes?
-	closed     bool    // Does this expression contradict a predecessor in the tableaux?
+	closed     bool    // Does this expression contradict a predecessor in the tableau?
 }
 
-// Should constitute the only way to create a Tnode instance.
+// The only way to create a Tnode instance.
 func New(tree *node.Node, sign bool, parent *Tnode) (*Tnode) {
 	var r Tnode
 
@@ -48,8 +47,8 @@ func New(tree *node.Node, sign bool, parent *Tnode) (*Tnode) {
 	return &r
 }
 
-// Find all unclosed leaf node(s). Leaf might
-// be marked "used" if it's just an identifier,
+// Find all unclosed leaf node(s) below the receiver in
+// a tableau. Leaf might be marked "used" if it's just an identifier,
 // also this can return zero-len array if all leaf nodes marked closed
 func (n *Tnode) FindUnclosedLeaf() ([]*Tnode) {
 	var a []*Tnode
@@ -78,7 +77,7 @@ func (n *Tnode) FindTallestUnused() *Tnode {
 	// Have to consider n (the unclosed leaf node itself)
 	// as it might be the only unused Tnode in the branch.
 	// Also have to walk Tnode.Parent chain all the way up
-	// to the root of the tableaux, because IDENT node.Node
+	// to the root of the tableau, because IDENT node.Node
 	// objects can appear below an unused node.Node in a branch.
 	for p = n; p != nil; p = p.Parent {
 		if !p.Used {
@@ -88,10 +87,10 @@ func (n *Tnode) FindTallestUnused() *Tnode {
 	return unused
 }
 
-// Follow Tnode.Parent links all the way up a branch of a tableaux
-// to try to find a contradiction to a Tnode instance n. Not recursive,
-// so the receiver n is the expression possibly contradicted by element
-// further back up the tableaux branch.
+// Try to find a contradiction to receiver Tnode instance n by following
+// Tnode.Parent links all the way up a branch of a tableau
+// Not recursive, so the receiver n is the expression possibly contradicted by
+// element further back up the tableau branch.
 func (n *Tnode) CheckForContradictions() bool {
 	for p := n.Parent; p != nil; p = p.Parent {
 		if n.Sign != p.Sign && n.Expression == p.Expression {
@@ -238,11 +237,12 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 	}
 
 	// Don't think it should ever get here.
-	panic("Trying to add inferences of %v:%q to leaf node %v:%q\n", from.Sign, from.Expression, parent.Sign, parent.Expression)
+	errString := fmt.Sprintf("Trying to add inferences of %v:%q to leaf node %v:%q\n", from.Sign, from.Expression, parent.Sign, parent.Expression)
+	panic(errString)
 }
 
-// The actual work of writing GraphViz digraph output to w.
-// Another traverse of tableaux (binary tree of *Tnode instances),
+// Do the actual work of writing GraphViz digraph output to io.Writer w.
+// Another traverse of a tableau (binary tree of *Tnode instances),
 // with semantic irregularities causing some inorder and some postorder
 // operations.
 // The Tnode.Parent backlink can help in debugging.
@@ -277,18 +277,17 @@ func (p *Tnode) graphTnode(w io.Writer) {
 	}
 }
 
-// Write GraphViz directed graph input to w.
+// Write GraphViz directed graph dot input to argument w io.Writer.
 func (p *Tnode) GraphTnode(w io.Writer) {
 	fmt.Fprintf(w, "digraph g {\n")
 	p.graphTnode(w)
 	fmt.Fprintf(w, "}\n")
 }
 
-// Find the leaf node of some node p in a branch of a tableaux.
-// This assumes that there's just a linked list
-// via Tnode.Left elements. Used only in setting up
-// the hypotheses for finding consequences of a list
-// of formulas, so just followin Tnode.Left works.
+// Append argument n *Tnode to the leaf node of receiver p in a branch of a tableau.
+// This assumes that there's just a linked list via Tnode.Left elements. Used
+// only in setting up the hypotheses for finding consequences of a list of
+// formulas, so just followin Tnode.Left works.
 func (p *Tnode) AppendLeaf(n *Tnode) {
 	var leaf *Tnode
 	for t := p; t != nil; t = t.Left {

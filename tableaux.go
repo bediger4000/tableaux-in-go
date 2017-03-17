@@ -42,7 +42,7 @@ func main() {
 		trees = append(trees, tree)
 	}
 
-	// tblx will become the entire tableaux, below
+	// tblx will become the entire tableau, below
 	tblx := tableaux.New(trees[0], false, nil)
 
 	if len(trees) > 1 {
