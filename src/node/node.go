@@ -97,8 +97,45 @@ func (p *Node) Print(w io.Writer) {
 
 // Creating a Golang string with a human readable representation
 // of a parse tree in it.
-func ExpressionToString(root *Node) (string) {
+func ExpressionToString(root *Node) string {
 	var sb bytes.Buffer
 	root.Print(&sb)
 	return sb.String()
+}
+
+func (n *Node) graphNode(w io.Writer) {
+
+	var label string
+
+	switch n.Op {
+	case lexer.IDENT:
+		label = n.Ident
+	case lexer.IMPLIES:
+		label = ">"
+	case lexer.AND:
+		label = "&"
+	case lexer.OR:
+		label = "|"
+	case lexer.EQUIV:
+		label = "="
+	case lexer.NOT:
+		label = "~"
+	}
+
+	fmt.Fprintf(w, "n%p [label=\"%s\"];\n", n, label)
+
+	if n.Left != nil {
+		n.Left.graphNode(w)
+		fmt.Fprintf(w, "n%p -> n%p;\n", n, n.Left)
+	}
+	if n.Right != nil {
+		n.Right.graphNode(w)
+		fmt.Fprintf(w, "n%p -> n%p;\n", n, n.Right)
+	}
+}
+
+func (n *Node) GraphNode(w io.Writer) {
+	fmt.Fprintf(w, "digraph g {\n")
+	n.graphNode(w)
+	fmt.Fprintf(w, "}\n")
 }
