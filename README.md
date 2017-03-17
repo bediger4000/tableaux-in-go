@@ -25,6 +25,10 @@ See [README for package parser](https://github.com/bediger4000/tableaux-in-go/tr
 It is worth noting that the parse tree constructed by packages `lexer` and `parser` is different
 than a (finished) tableau.
 
+![Parse tree for `~(p&q)=(~p|~q)`](https://raw.githubusercontent.com/bediger4000/tableaux/master/examplep.png)
+![Finished tableau for`~(p&q)=(~p|~q)`](https://raw.githubusercontent.com/bediger4000/tableaux/master/examplet.png)
+
+
 ## Data structure for tableaux
 
 Incautious reading any of the 3 Smullyan books  above on analytic tableaux would have you
