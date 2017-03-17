@@ -1,15 +1,29 @@
 # Prove propositional logic tautologies via Smullyan's analytic tableaux method 
 
-* `|` - logical or
-* `&` - logical and
+* _A Beginner's Guide to Mathematical Logic_, Dover, 2014, chapter 6
+* _Logical Labyrinths_, CRC Press, 2009, chapter 11
+* _First Order Logic_, Dover, yyyy, chapter N
+
+All these books have essentially the same explanation with slight variations.
+This project does signed tableaux.
+
+
+Supports these binary infix logical oparators:
+
+* `~` - negation
+* `&` - conjunction
+* `|` - disjunction
 * `>` - material implication
 * `=` - logical equivalence
 
-## Something
-
 ## Parsing and Lexing
 
-See [package parser README]90  for details on this topic.
+See [README for package parser](https://github.com/bediger4000/tableaux-in-go/tree/master/src/parser)  for details on this topic.
+
+### Parse Tree
+
+It is worth noting that the parse tree constructed by packages `lexer` and `parser` is different
+than a (finished) tableau.
 
 ## Data structure for tableaux
 
