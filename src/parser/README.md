@@ -45,7 +45,7 @@ The grammar above led to parser methods like this:
         return n
     }
 
-And nearly identical functions like this:
+And nearly identical methods like this:
 
     func (p *Parser) parseImplication() (*node.Node) {
         n := p.parseDisjunction()
@@ -61,7 +61,10 @@ And nearly identical functions like this:
         return n
     }
 
-So I combined parseEquivalence(), parseImplication(), parseConjunction()
+The only differences between the two above: `parseImplication` vs `parseDisjunction`
+and `EQUIV` vs `IMPLIES`. I can factor this out.
+
+I combined parseEquivalence(), parseImplication(), parseConjunction()
 and parseDisjunction() into a single "generalized" function which takes
 a `lexer.TokenType` argument. That argument is used to decide what the
 condition in the for-loop stops on, and to choose the next function to
@@ -69,3 +72,27 @@ call, `parseProdction()` or `parseFactor()`. This generalized function
 is a lot harder to understand, but writing `fn := p.parseFactor`, and having
 it work is just too cool.
 
+    func (p *Parser) parseProduction(op lexer.TokenType ) (*node.Node) {
+    
+        nextProduction := p.parseProduction
+        if op == lexer.AND {
+            nextProduction = p.parseFactor
+        }
+    
+        no := nextOp[op]
+        newNode := nextProduction(no)
+        if newNode != nil {
+            for _, typ := p.lexer.Next(); typ == op; _, typ = p.lexer.Next() {
+                p.lexer.Consume()
+                tmp := node.NewOpNode(op)
+                tmp.Left = newNode
+                tmp.Right = nextProduction(no)
+                newNode = tmp
+            }
+        }
+        return newNode
+    }
+
+The keys in this method are `no := nextOp[op]`, which is the operation getting factored out,
+and `nextProduction := p.parseProduction`. Not unlike Python, you can keep a reference to a
+particular object and one of its methods.
