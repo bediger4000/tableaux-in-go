@@ -18,8 +18,8 @@ tableaux: tableaux.go src/lexer/lexer.go src/parser/parser.go src/node/node.go \
 
 # Need to have GraphViz installed for this to work.
 diagrams: tableaux parsetest
-	./parsetest -g examplep.dot '~(a&b)=(~p|~q)'
-	./tableaux -g examplet.dot '~(a&b)=(~p|~q)'
+	./parsetest -g examplep.dot '~(p&q)=(~p|~q)'
+	./tableaux -g examplet.dot '~(p&q)=(~p|~q)'
 	dot -Tpng -o examplep.png examplep.dot
 	dot -Tpng -o examplet.png examplet.dot
 
