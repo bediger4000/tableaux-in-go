@@ -26,10 +26,7 @@ It is worth noting that the parse tree constructed by packages `lexer` and `pars
 than a (finished) tableau.
 
 
-![Parse tree for `~(p&q)=(~p|~q)`](https://raw.githubusercontent.com/bediger4000/tableaux/master/examplep.png)
-
-
-![Finished tableau for`~(p&q)=(~p|~q)`](https://raw.githubusercontent.com/bediger4000/tableaux/master/examplet.png)
+![Parse tree for `~(p&q)=(~p|~q)`](https://raw.githubusercontent.com/bediger4000/tableaux-in-go/master/examplep.png) ![Finished tableau for`~(p&q)=(~p|~q)`](https://raw.githubusercontent.com/bediger4000/tableaux-in-go/master/examplet.png)
 
 
 ## Data structure for tableaux
