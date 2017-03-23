@@ -17,6 +17,48 @@ Supports these binary infix logical oparators:
 
 And of course one binary prefix operator, `~` - negation.
 
+## Building the program
+
+    $ make tableaux
+
+## Using the program
+
+Invoked with a single propositional logic expression, `tableaux`
+writes out a tableau that proves whether the expression constitutes
+a tautology or not.
+
+    $ ./tableaux '((p>q)>r) > ((p>q)>(p>r))'
+    Expression: "((p > q) > r) > ((p > q) > (p > r))"
+    /*
+
+    0. false: ((p > q) > r) > ((p > q) > (p > r))
+    1. true: (p > q) > r (0)
+    2. false: (p > q) > (p > r) (0)
+       3 left, 4 right
+
+    3. false: p > q (1)
+    5. true: p > q (2) contradicts 3
+
+
+    4. true: r (1)
+    6. true: p > q (2)
+    7. false: p > r (2)
+       8 left, 9 right
+
+    8. false: p (6)
+    10. true: p (7) contradicts 8
+
+
+    9. true: q (6)
+    11. true: p (7)
+    12. false: r (7) contradicts 4
+
+    Formula is a tautology
+    */
+
+Called with more than one propositional logic expression, `tableaux` proves
+whether or not the final expression is a logical consequence of the other expressions.
+
 ## Parsing and Lexing
 
 See [README for package parser](https://github.com/bediger4000/tableaux-in-go/tree/master/src/parser)  for details on this topic.
