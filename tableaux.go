@@ -94,12 +94,12 @@ func main() {
 	tableaux.PrintTableaux(os.Stdout, tblx)
 
 	if tautological {
-		fmt.Printf("Formula is tautology\n")
+		fmt.Printf("Formula is a tautology\n")
 	} else {
 		fmt.Printf("Formula is not a tautology\n")
 	}
 
-	fmt.Printf("\n*/\n")
+	fmt.Printf("*/\n")
 
 	if *graphVizOutputFilename != "" {
 		fout, err := os.OpenFile(*graphVizOutputFilename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
