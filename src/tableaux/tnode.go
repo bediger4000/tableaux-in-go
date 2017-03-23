@@ -340,12 +340,17 @@ func PrintTableaux(w io.Writer, root *Tnode) {
 			if p.inferredFrom != nil {
 				inferenceNote = fmt.Sprintf(" (%d)", p.inferredFrom.LineNumber)
 			}
-			fmt.Fprintf(w, "%d. %v: %s%s\n", p.LineNumber, p.Sign, p.Expression, inferenceNote)
+			fmt.Fprintf(w, "%d. %v: %s%s", p.LineNumber, p.Sign, p.Expression, inferenceNote)
 			if p.closed {
-				fmt.Fprintf(w, "\tcontradicted by %d\n", p.Contradictory.LineNumber)
+				fmt.Fprintf(w, " contradicts %d\n", p.Contradictory.LineNumber)
 			}
+			if p.Left == nil && p.Right == nil && !p.closed {
+				fmt.Fprintf(w, " open branch\n")
+			}
+			fmt.Fprintf(w, "\n")
 
 			if p.Left != nil && p.Right != nil {
+				fmt.Fprintf(w, "   %d left, %d right\n", p.Left.LineNumber, p.Right.LineNumber)
 				queue = append(queue, p.Left)
 				queue = append(queue, p.Right)
 				p = nil
