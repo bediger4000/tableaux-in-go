@@ -16,6 +16,10 @@ import (
 )
 
 type Tnode struct {
+	LineNumber int
+	Contradictory *Tnode
+	inferredFrom *Tnode
+
 	// Set in New(), should never get changed
 	Sign       bool
 	Tree       *node.Node
@@ -30,9 +34,14 @@ type Tnode struct {
 	closed     bool    // Does this expression contradict a predecessor in the tableau?
 }
 
+var serialNumber int
+
 // The only way to create a Tnode instance.
 func New(tree *node.Node, sign bool, parent *Tnode) (*Tnode) {
 	var r Tnode
+
+	r.LineNumber = serialNumber
+	serialNumber++
 
 	r.Tree = tree
 	r.Used = false
@@ -94,7 +103,7 @@ func (n *Tnode) FindTallestUnused() *Tnode {
 func (n *Tnode) CheckForContradictions() bool {
 	for p := n.Parent; p != nil; p = p.Parent {
 		if n.Sign != p.Sign && n.Expression == p.Expression {
-			fmt.Printf("Leaf %v: %q contradicted by ancestor %v: %q\n", n.Sign, n.Expression, p.Sign, p.Expression)
+			n.Contradictory = p
 			n.closed = true
 			return true
 		}
@@ -118,13 +127,13 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 	if (from.Tree.Op == lexer.AND && from.Sign == false) || (from.Tree.Op == lexer.OR && from.Sign == true) {
 		immediate := New(from.Tree.Left, from.Sign, parent)
 		parent.Left = immediate
-		fmt.Printf("Adding %v: %q left of %v: %q\n", immediate.Sign, immediate.Expression, parent.Sign, parent.Expression)
+		immediate.inferredFrom = from
 
 		immediate.CheckForContradictions()
 
 		immediate2 := New(from.Tree.Right, from.Sign, parent)
-		fmt.Printf("Adding %v: %q right of %v: %q\n", immediate2.Sign, immediate2.Expression, parent.Sign, parent.Expression)
 		parent.Right = immediate2
+		immediate2.inferredFrom = from
 
 		immediate2.CheckForContradictions()
 
@@ -134,13 +143,13 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 	if from.Tree.Op == lexer.IMPLIES && from.Sign == true {
 		immediate := New(from.Tree.Left, false, parent)
 		parent.Left = immediate
-		fmt.Printf("Adding %v: %q left of %v: %q\n", immediate.Sign, immediate.Expression, parent.Sign, parent.Expression)
+		immediate.inferredFrom = from
 
 		immediate.CheckForContradictions()
 
 		immediate2 := New(from.Tree.Right, true, parent)
 		parent.Right = immediate2
-		fmt.Printf("Adding %v: %q right of %v: %q\n", immediate2.Sign, immediate2.Expression, parent.Sign, parent.Expression)
+		immediate2.inferredFrom = from
 
 		immediate2.CheckForContradictions()
 
@@ -161,26 +170,26 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 
 		immediate1 := New(from.Tree.Left, sign1, parent)
 		parent.Left = immediate1
-		fmt.Printf("Adding %v: %q below of %v: %q\n", immediate1.Sign, immediate1.Expression, parent.Sign, parent.Expression)
+		immediate1.inferredFrom = from
 
 		if !immediate1.CheckForContradictions() {
 
 			immediate2 := New(from.Tree.Right, sign2, immediate1)
 			immediate1.Left = immediate2
-			fmt.Printf("Adding %v: %q below of %v: %q\n", immediate2.Sign, immediate2.Expression, immediate1.Sign, immediate1.Expression)
+			immediate2.inferredFrom = from
 
 			immediate2.CheckForContradictions()
 		}
 
 		immediate3 := New(from.Tree.Left, sign3, parent)
 		parent.Right = immediate3
-		fmt.Printf("Adding %v: %q below of %v: %q\n", immediate3.Sign, immediate3.Expression, parent.Sign, parent.Expression)
+		immediate3.inferredFrom = parent
 
 		if !immediate3.CheckForContradictions() {
 
 			immediate4 := New(from.Tree.Right, sign4, immediate3)
+			immediate4.inferredFrom = parent
 			immediate3.Left = immediate4
-			fmt.Printf("Adding %v: %q below of %v: %q\n", immediate4.Sign, immediate4.Expression, immediate3.Sign, immediate3.Expression)
 
 			immediate4.CheckForContradictions()
 		}
@@ -195,8 +204,8 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 
 	if from.Tree.Op == lexer.NOT {
 		immediate := New(from.Tree.Left, !from.Sign, parent)
+		immediate.inferredFrom = from
 		parent.Left = immediate
-		fmt.Printf("Adding %v: %q below of %v: %q\n", immediate.Sign, immediate.Expression, parent.Sign, parent.Expression)
 
 		parent.Left.CheckForContradictions()
 		return
@@ -204,16 +213,16 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 
 	if (from.Tree.Op == lexer.AND && from.Sign == true) || (from.Tree.Op == lexer.OR && from.Sign == false) {
 		immediate := New(from.Tree.Left, from.Sign, parent)
+		immediate.inferredFrom = from
 		parent.Left = immediate
-		fmt.Printf("Adding %v: %q below of %v: %q\n", immediate.Sign, immediate.Expression, parent.Sign, parent.Expression)
 
 		// Check 1st inference for contradictions, don't bother subjoining 2nd inference
 		// if 1st one has a contradction and closes the branch.
 		if !immediate.CheckForContradictions() {
 
 			immediate2 := New(from.Tree.Right, from.Sign, immediate)
+			immediate2.inferredFrom = from
 			immediate.Left = immediate2
-			fmt.Printf("Adding %v: %q below of %v: %q\n", immediate2.Sign, immediate2.Expression, immediate.Sign, immediate.Expression)
 
 			immediate2.CheckForContradictions()
 		}
@@ -225,11 +234,11 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 	// preventing the general alpha-type code above from working.
 	if from.Tree.Op == lexer.IMPLIES && from.Sign == false {
 		parent.Left = New(from.Tree.Left, true, parent)
-		fmt.Printf("Adding %v: %q below of %v: %q\n", parent.Left.Sign, parent.Left.Expression, parent.Sign, parent.Expression)
+		parent.Left.inferredFrom = from
 		if ! parent.Left.CheckForContradictions() {
 
 			parent.Left.Left = New(from.Tree.Right, false, parent.Left)
-			fmt.Printf("Adding %v: %q below of %v: %q\n", parent.Left.Left.Sign, parent.Left.Left.Expression, parent.Left.Sign, parent.Left.Expression)
+			parent.Left.Left.inferredFrom = from
 			parent.Left.Left.CheckForContradictions()
 		}
 
@@ -313,5 +322,36 @@ func (p *Tnode) PrintTnode() {
 	}
 	if p.Right != nil {
 		p.Right.PrintTnode()
+	}
+}
+
+func PrintTableaux(w io.Writer, root *Tnode) {
+	var queue []*Tnode
+
+	queue = append(queue, root)
+
+	for len(queue) > 0 {
+		p := queue[0]
+		queue = queue[1:]
+
+		fmt.Printf("\n")
+		for p != nil {
+			var inferenceNote string = ""
+			if p.inferredFrom != nil {
+				inferenceNote = fmt.Sprintf(" (%d)", p.inferredFrom.LineNumber)
+			}
+			fmt.Fprintf(w, "%d. %v: %s%s\n", p.LineNumber, p.Sign, p.Expression, inferenceNote)
+			if p.closed {
+				fmt.Fprintf(w, "\tcontradicted by %d\n", p.Contradictory.LineNumber)
+			}
+
+			if p.Left != nil && p.Right != nil {
+				queue = append(queue, p.Left)
+				queue = append(queue, p.Right)
+				p = nil
+			} else {
+				p = p.Left
+			}
+		}
 	}
 }
