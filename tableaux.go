@@ -24,35 +24,45 @@ func main() {
 	}
 
 	if len(expressions) == 0 {
-		fmt.Fprintf(os.Stderr, "Need at least one propostitional logic formula on command line\n")
+		fmt.Fprintf(os.Stderr, "Need at least one propositional logic formula on command line\n")
 		os.Exit(1)
 	}
 
 	// Parse expression(s) on cmd line into *node.Node objects
 	var trees []*node.Node
 
-	for _, expression := range expressions {
+	expressionCount := len(expressions)
+	denotation := "Expression"
+	if expressionCount > 1 {
+		denotation = "Hypothesis"
+	}
+
+	for idx, expression := range expressions {
 		var lxr *lexer.Lexer
 		expr := bytes.NewBufferString(expression+"\n")  // parser.Parser needs to recognize end-of-line
 		lxr = lexer.NewFromFile(expr)
 		psr := parser.New(lxr)
 		tree := psr.Parse()
-		fmt.Printf("Expression: %q\n", node.ExpressionToString(tree))
+		fmt.Printf("%s: %q\n", denotation, node.ExpressionToString(tree))
 		trees = append(trees, tree)
+		if idx == expressionCount - 2 {
+			denotation = "Consequence"
+		}
 	}
 
 	// tblx will become the entire tableau, below
 	tblx := tableaux.New(trees[0], false, nil)
 
+	var finalFormula *tableaux.Tnode
 	if len(trees) > 1 {
 		// More than 1 PL formula, put them together for deciding
 		// logical consequence - all signed T except that last one F.
-		var t *tableaux.Tnode
-		for _, tree := range trees {
-			t = tableaux.New(tree, true, nil)  // All signed T
-			tblx.AppendLeaf(t)
+		tblx.Sign = true
+		for _, tree := range trees[1:] {
+			finalFormula = tableaux.New(tree, true, nil)  // All signed T
+			tblx.AppendLeaf(finalFormula)
 		}
-		t.Sign = false  // Except final one, signed F
+		finalFormula.Sign = false  // Except final one, signed F
 	} else {
 		// Single expression. Subjoin its own inferences.
 		tblx.AddInferences(tblx)
@@ -93,10 +103,17 @@ func main() {
 
 	tableaux.PrintTableaux(os.Stdout, tblx)
 
-	if tautological {
-		fmt.Printf("Formula is a tautology\n")
+	var modifier string
+	if !tautological {
+		modifier = " not"
 	} else {
-		fmt.Printf("Formula is not a tautology\n")
+		modifier = ""
+	}
+
+	if finalFormula == nil {
+		fmt.Printf("Formula is%s a tautology\n", modifier)
+	} else {
+		fmt.Printf("%s is%s a logical consequence of hypotheses\n", finalFormula.Expression, modifier)
 	}
 
 	fmt.Printf("*/\n")
