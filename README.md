@@ -4,6 +4,8 @@ Famous logician [Raymond Smullyan ](https://en.wikipedia.org/wiki/Raymond_Smully
 used a proof procedure called [analytic tableaux](https://en.wikipedia.org/wiki/Method_of_analytic_tableaux)
 to prove tautologies in propositional logic.
 
+[An online prover that produces tableaux](http://www.umsu.de/logik/trees/)
+
 This program is based on chapters from three books by Smullyan:
 
 * _A Beginner's Guide to Mathematical Logic_, Dover, 2014, chapter 6
@@ -22,11 +24,30 @@ The golang program `tableaux` supports these binary infix logical oparators:
 
 And one unary prefix operator, `~`, for negation.
 
+The parser does apply operator precedence: `e = d > c | b & ~a` ends up fully parenthesized like this:
+`e = (d > (c | (b & ~a)))`.  The precedence is: `~` > `&` > `|` > `>` > ~=`.  Negation symbol binds
+tighter than Conjuction symbol, and so forth.
+
+Expressing logical equivalence without the `=` operator would look like this:
+
+    (a > b) & (b > a)
+
+In this case, parentheses need to exist. The expression `a > b & b > a` gets parsed as `(a > (b & b)) > a`
+
+
 ## Building the program
 
     $ make tableaux
 
 ## Using the program
+
+You invoke `tableaux` with one or more expressions on the command line. A single expression
+causes `tableaux` to use that expression in a proof of tautology. More than one expression
+causes `tableaux` to treat the all but the last expression as hypotheses, then check that
+the final expression is or is not a logical consequence of the hypotheses.
+
+`tableaux` produces a text representation of the final tableau on stdout. You can invoke it
+with a `-g _filename_` argument, which will write [GraphViz]() `dot` input format to the file named.
 
 Invoked with a single propositional logic expression, `tableaux`
 writes out a tableau that proves whether the expression constitutes
@@ -91,18 +112,20 @@ As pseudocode:
     do {
         find all unclosed leaf nodes of tableau
 
-        if no unclosed leave nodes exist:
+        if no unclosed leave nodes exist {
             the expression is tautological
+            exit the do-loop
+        }
 
-        for each unclosed leaf node:
+        for each unclosed leaf node {
 
             Find an unused forumla as far up the tableau as possible
             on the branch that the unclosed leaf node resides on.
 
-            if such an unused formula exits:
+            if such an unused formula exits {
 
                 Subjoin inferences of the unused formula to all
-                unclosed leaf nodes beneath it currently in the tableau.
+                unclosed leaf nodes beneath it in the tableau.
                 Mark inferences that consist of a signed identifer as used.
 
                 Check each newly-subjoined inference for contradictions with
@@ -113,11 +136,25 @@ As pseudocode:
 
                 exit for-each loop over unclosed leaf nodes. The list of unclosed
                 leaf nodes is invalid, as new leaves have been subjoined.
+            } else {
+
+				the do loop should terminate
+
+			}
+        }
 
     } while an unused formula was found
 
 This algorithm terminates when no unused formulas exist in the tableau, or no
-unclosed branches exist.
+unclosed branches exist. If no unclosed branches exist, the original input formula
+is a tautology, otherwise, it is not.
+
+The algorithm is guaranteed to terminate. Each subjoined formula, the result of making 1 or 2
+inferences from a previously unused formula, has one logical operator (&, |, >, =, ~) fewer
+than the expression inferred from. Eventually, the result of every inference of will be
+a identifier without any operators. If no unclosed branches result from the subjoining,
+the formula is not a tautology, otherwise, it is.
+will result from 
 
 ## Parsing and Lexing
 
