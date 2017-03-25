@@ -13,7 +13,9 @@ This program is based on chapters from three books by Smullyan:
 * _First Order Logic_, Dover, 1995, chapter II
 
 All three books have essentially the same explanation with slight variations.
-This project does signed tableaux.
+This project does signed tableaux. I'm amused by this method of proof. During the proof, you
+never assign a valuation to the propsitional identifers. Making inferences is based solely
+on syntax and sign of a formula. It almost seems magical.
 
 The golang program `tableaux` supports these binary infix logical oparators:
 
