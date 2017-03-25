@@ -1,10 +1,10 @@
 # Prove propositional logic tautologies via Smullyan's analytic tableaux method 
 
+You may also enjoy [another online prover that produces tableaux](http://www.umsu.de/logik/trees/)
+
 Famous logician [Raymond Smullyan ](https://en.wikipedia.org/wiki/Raymond_Smullyan)
 used a proof procedure called [analytic tableaux](https://en.wikipedia.org/wiki/Method_of_analytic_tableaux)
 to prove tautologies in propositional logic.
-
-[An online prover that produces tableaux](http://www.umsu.de/logik/trees/)
 
 This program is based on chapters from three books by Smullyan:
 
@@ -47,7 +47,9 @@ causes `tableaux` to treat the all but the last expression as hypotheses, then c
 the final expression is or is not a logical consequence of the hypotheses.
 
 `tableaux` produces a text representation of the final tableau on stdout. You can invoke it
-with a `-g _filename_` argument, which will write [GraphViz]() `dot` input format to the file named.
+with a `-g _filename_` argument, which will write [GraphViz](http://www.graphviz.org/) `dot` input format to the file named.
+The `makefile` for this project creates the parse tree and finished tableau `dot` inputs for
+the images below: `make diagrams` will re-create them.
 
 Invoked with a single propositional logic expression, `tableaux`
 writes out a tableau that proves whether the expression constitutes
