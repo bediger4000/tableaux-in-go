@@ -10,7 +10,7 @@ This program is based on chapters from three books by Smullyan:
 * _Logical Labyrinths_, CRC Press, 2009, chapter 11
 * _First Order Logic_, Dover, 1995, chapter II
 
-All these books have essentially the same explanation with slight variations.
+All three books have essentially the same explanation with slight variations.
 This project does signed tableaux.
 
 `tableaux` supports these binary infix logical oparators:
@@ -20,7 +20,7 @@ This project does signed tableaux.
 * `>` - material implication
 * `=` - logical equivalence
 
-And one binary prefix operator for negation: `~`
+And one unary prefix operator, `~`, for negation.
 
 ## Building the program
 
@@ -64,6 +64,26 @@ a tautology or not.
 Called with more than one propositional logic expression, `tableaux` proves
 whether or not the final expression is a logical consequence of the other expressions.
 
+    $ ./tableaux 'a' 'a>b' 'b'
+    Hypothesis: "a"
+    Hypothesis: "a > b"
+    Consequence: "b"
+    /*
+    
+    0. true: a
+    1. true: a > b
+    2. false: b
+       3 left, 4 right
+    
+    3. false: a (1) contradicts 0
+    
+    
+    4. true: b (1) contradicts 2
+    
+    b is a logical consequence of hypotheses
+    */
+
+
 ## Proof Procedure
 
 As pseudocode:
@@ -91,13 +111,13 @@ As pseudocode:
 
                 Mark the unused formula as used.
 
-                exit for-each loop over unclosed leaf nodes.
+                exit for-each loop over unclosed leaf nodes. The list of unclosed
+                leaf nodes is invalid, as new leaves have been subjoined.
 
     } while an unused formula was found
 
-This algorithm terminates, since each formula gets used to subjoin inferences
-only once. Subjoined inferences that contradict previously subjoined inferences,
-"close" a branch of the tableaux so that no further inferences are added to that branch. 
+This algorithm terminates when no unused formulas exist in the tableau, or no
+unclosed branches exist.
 
 ## Parsing and Lexing
 
