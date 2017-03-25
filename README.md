@@ -1,21 +1,26 @@
 # Prove propositional logic tautologies via Smullyan's analytic tableaux method 
 
+Famous logician [Raymond Smullyan ](https://en.wikipedia.org/wiki/Raymond_Smullyan)
+used a proof procedure called [analytic tableaux](https://en.wikipedia.org/wiki/Method_of_analytic_tableaux)
+to prove tautologies in propositional logic.
+
+This program is based on chapters from three books by Smullyan:
+
 * _A Beginner's Guide to Mathematical Logic_, Dover, 2014, chapter 6
 * _Logical Labyrinths_, CRC Press, 2009, chapter 11
-* _First Order Logic_, Dover, yyyy, chapter N
+* _First Order Logic_, Dover, 1995, chapter II
 
 All these books have essentially the same explanation with slight variations.
 This project does signed tableaux.
 
-
-Supports these binary infix logical oparators:
+`tableaux` supports these binary infix logical oparators:
 
 * `&` - conjunction
 * `|` - disjunction
 * `>` - material implication
 * `=` - logical equivalence
 
-And of course one binary prefix operator, `~` - negation.
+And one binary prefix operator for negation: `~`
 
 ## Building the program
 
@@ -59,23 +64,58 @@ a tautology or not.
 Called with more than one propositional logic expression, `tableaux` proves
 whether or not the final expression is a logical consequence of the other expressions.
 
+## Proof Procedure
+
+As pseudocode:
+
+    do {
+        find all unclosed leaf nodes of tableau
+
+        if no unclosed leave nodes exist:
+            the expression is tautological
+
+        for each unclosed leaf node:
+
+            Find an unused forumla as far up the tableaux as possible
+            on the branch that the unclosed leaf node resides on.
+
+            if such an unused formula exits:
+
+                Subjoin inferences of the unused formula to all
+                unclosed leaf nodes beneath it currently in the tableaux.
+                Mark inferences that consist of a signed identifer as used.
+
+                Check each newly-subjoined inference for contradictions with
+                previous inferences in the tableau's branch it resides on. Mark
+                any leaf nodes that cause a contradiction as closed.
+
+                Mark the unused formula as used.
+
+                exit for-each loop over unclosed leaf nodes.
+
+    } while an unused formula was found
+
+This algorithm terminates, since each formula gets used to subjoin inferences
+only once. Subjoined inferences that contradict previously subjoined inferences,
+"close" a branch of the tableaux so that no further inferences are added to that branch. 
+
 ## Parsing and Lexing
 
 See [README for package parser](https://github.com/bediger4000/tableaux-in-go/tree/master/src/parser)  for details on this topic.
 
 ### Parse Tree
 
-It is worth noting that the parse tree constructed by packages `lexer` and `parser` is different
-than a (finished) tableau.
+Note that a parse tree constructed by packages `lexer` and `parser` differs
+from a (finished) tableau.
 
 
-![Parse tree for `~(p&q)=(~p|~q)`](https://raw.githubusercontent.com/bediger4000/tableaux-in-go/master/examplep.png)
+![Parse tree for ~(p&q)=(~p|~q)](https://raw.githubusercontent.com/bediger4000/tableaux-in-go/master/examplep.png)
 
-Parse tree for ``~(p&q)=(~p|~q)`.
+*Parse tree for ~(p&q)=(~p|~q)*
 
 ![Finished tableau for`~(p&q)=(~p|~q)`](https://raw.githubusercontent.com/bediger4000/tableaux-in-go/master/examplet.png)
 
-Finished tableau for ``~(p&q)=(~p|~q)`, the same expression.
+*Finished tableau for ~(p&q)=(~p|~q)*
 
 ## Data structure for tableaux
 
