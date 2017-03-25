@@ -13,7 +13,7 @@ This program is based on chapters from three books by Smullyan:
 All three books have essentially the same explanation with slight variations.
 This project does signed tableaux.
 
-`tableaux` supports these binary infix logical oparators:
+The golang program `tableaux` supports these binary infix logical oparators:
 
 * `&` - conjunction
 * `|` - disjunction
@@ -96,13 +96,13 @@ As pseudocode:
 
         for each unclosed leaf node:
 
-            Find an unused forumla as far up the tableaux as possible
+            Find an unused forumla as far up the tableau as possible
             on the branch that the unclosed leaf node resides on.
 
             if such an unused formula exits:
 
                 Subjoin inferences of the unused formula to all
-                unclosed leaf nodes beneath it currently in the tableaux.
+                unclosed leaf nodes beneath it currently in the tableau.
                 Mark inferences that consist of a signed identifer as used.
 
                 Check each newly-subjoined inference for contradictions with
@@ -131,21 +131,25 @@ from a (finished) tableau.
 
 ![Parse tree for ~(p&q)=(~p|~q)](https://raw.githubusercontent.com/bediger4000/tableaux-in-go/master/examplep.png)
 
-*Parse tree for ~(p&q)=(~p|~q)*
+**Parse tree for ~(p&q)=(~p|~q)**
 
 ![Finished tableau for`~(p&q)=(~p|~q)`](https://raw.githubusercontent.com/bediger4000/tableaux-in-go/master/examplet.png)
 
-*Finished tableau for ~(p&q)=(~p|~q)*
+**Finished tableau for ~(p&q)=(~p|~q)**
 
 ## Data structure for tableaux
 
-Incautious reading any of the 3 Smullyan books  above on analytic tableaux would have you
-believe that an analytic tableaux consists of arrays of subexpressions of the propositional
-logic formula to be proved. Smullyan was not a programmer, it seems, because a tableaux is
-a binary tree of individual subexpressions. The sign part of an analytic tableaux is attached
+Incautious reading any of the 3 Smullyan books  above would have you
+believe that an analytic tableau consists of arrays of subexpressions of the propositional
+logic formula to be proved. Smullyan was not a programmer, it seems, because a tableau is
+a binary tree of individual subexpressions. The sign part of an analytic tableau is attached
 to a subexpression, as is the notion of an unused formula, and whether a branch is closed or not.
 
     type Tnode struct {
+        LineNumber int
+        Contradictory *Tnode
+        inferredFrom *Tnode
+
         Sign       bool
         Tree       *node.Node
         Expression string
