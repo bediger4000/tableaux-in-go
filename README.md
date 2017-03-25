@@ -142,9 +142,9 @@ As pseudocode:
                 leaf nodes is invalid, as new leaves have been subjoined.
             } else {
 
-				the do loop should terminate
+                the do loop should terminate
 
-			}
+            }
         }
 
     } while an unused formula was found
@@ -158,7 +158,6 @@ inferences from a previously unused formula, has one logical operator (&, |, >, 
 than the expression inferred from. Eventually, the result of every inference of will be
 a identifier without any operators. If no unclosed branches result from the subjoining,
 the formula is not a tautology, otherwise, it is.
-will result from 
 
 ## Parsing and Lexing
 
