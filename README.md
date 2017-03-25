@@ -27,7 +27,7 @@ The golang program `tableaux` supports these binary infix logical oparators:
 And one unary prefix operator, `~`, for negation.
 
 The parser does apply operator precedence: `e = d > c | b & ~a` ends up fully parenthesized like this:
-`e = (d > (c | (b & ~a)))`.  The precedence is: `~` > `&` > `|` > `>` > ~=`.  Negation symbol binds
+`e = (d > (c | (b & ~a)))`.  The precedence is: `~` &rarr; `&` &rarr; `|` &rarr; `>` &rarr; `=`.  Negation symbol binds
 tighter than Conjuction symbol, and so forth.
 
 Expressing logical equivalence without the `=` operator would look like this:
