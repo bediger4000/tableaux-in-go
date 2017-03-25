@@ -16,28 +16,30 @@ import (
 )
 
 type Tnode struct {
-	LineNumber int
-	Contradictory *Tnode
-	inferredFrom *Tnode
 
 	// Set in New(), should never get changed
+	LineNumber int
 	Sign       bool
 	Tree       *node.Node
-	Expression string  // element Tree as a string.
+	Expression string // element Tree as a string.
 
 	// Changed during subjoining inferences, and initial setup.
-	Parent     *Tnode
-	Left       *Tnode
-	Right      *Tnode
+	Parent *Tnode
+	Left   *Tnode
+	Right  *Tnode
 
-	Used       bool    // Have interence(s) of this expression been subjoined to leaf nodes?
-	closed     bool    // Does this expression contradict a predecessor in the tableau?
+	Used          bool // Have interence(s) of this expression been subjoined to leaf nodes?
+	closed        bool // Does this expression contradict a predecessor in the tableau?
+
+	// Other nodes in tableau special to this one
+	Contradictory *Tnode
+	inferredFrom  *Tnode
 }
 
 var serialNumber int
 
 // The only way to create a Tnode instance.
-func New(tree *node.Node, sign bool, parent *Tnode) (*Tnode) {
+func New(tree *node.Node, sign bool, parent *Tnode) *Tnode {
 	var r Tnode
 
 	r.LineNumber = serialNumber
@@ -46,7 +48,7 @@ func New(tree *node.Node, sign bool, parent *Tnode) (*Tnode) {
 	r.Tree = tree
 	r.Used = false
 	if tree.Op == lexer.IDENT {
-		r.Used = true  // No inferences to make from an identifier.
+		r.Used = true // No inferences to make from an identifier.
 	}
 	r.closed = false
 	r.Parent = parent
@@ -59,7 +61,7 @@ func New(tree *node.Node, sign bool, parent *Tnode) (*Tnode) {
 // Find all unclosed leaf node(s) below the receiver in
 // a tableau. Leaf might be marked "used" if it's just an identifier,
 // also this can return zero-len array if all leaf nodes marked closed
-func (n *Tnode) FindUnclosedLeaf() ([]*Tnode) {
+func (n *Tnode) FindUnclosedLeaf() []*Tnode {
 	var a []*Tnode
 	if n.Left == nil && n.Right == nil {
 		if !n.closed {
@@ -235,7 +237,7 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 	if from.Tree.Op == lexer.IMPLIES && from.Sign == false {
 		parent.Left = New(from.Tree.Left, true, parent)
 		parent.Left.inferredFrom = from
-		if ! parent.Left.CheckForContradictions() {
+		if !parent.Left.CheckForContradictions() {
 
 			parent.Left.Left = New(from.Tree.Right, false, parent.Left)
 			parent.Left.Left.inferredFrom = from
@@ -257,7 +259,9 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 // The Tnode.Parent backlink can help in debugging.
 func (p *Tnode) graphTnode(w io.Writer) {
 	sign := "F"
-	if p.Sign { sign = "T" }
+	if p.Sign {
+		sign = "T"
+	}
 
 	// Append a string to the formula, inlucde 'U' for a formula
 	// whose inferences got subjoined to all it's leaf nodes,
@@ -271,11 +275,11 @@ func (p *Tnode) graphTnode(w io.Writer) {
 	}
 
 	fmt.Fprintf(w, "n%p [label=\"%s: %s%s\"];\n", p, sign, p.Expression, ", "+extra)
-/*
-	if p.Parent != nil {
-		fmt.Fprintf(w, "n%p -> n%p;\n", p, p.Parent)
-	}
-*/
+	/*
+		if p.Parent != nil {
+			fmt.Fprintf(w, "n%p -> n%p;\n", p, p.Parent)
+		}
+	*/
 	if p.Left != nil {
 		p.Left.graphTnode(w)
 		fmt.Fprintf(w, "n%p -> n%p;\n", p, p.Left)
