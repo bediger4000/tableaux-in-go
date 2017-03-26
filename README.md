@@ -165,7 +165,7 @@ You can get an upper bound on the maximum branch depth of a tableau by counting 
 in the original expression:
 
 * Negation counts for 1
-* Equivalence, implication, condjunction, disjunction count for 2
+* Equivalence, implication, conjunction, disjunction count for 2
 
 The depth of the longest branch will be no greater than what you count.
 
