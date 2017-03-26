@@ -155,13 +155,23 @@ is a tautology, otherwise, it is not.
 
 The algorithm is guaranteed to terminate. Each subjoined formula, the result of making 1 or 2
 inferences from a previously unused formula, has one logical operator (&, |, >, =, ~) fewer
-than the expression inferred from. Eventually, the result of every inference of will be
-a identifier without any operators. If no unclosed branches result from the subjoining,
-the formula is not a tautology, otherwise, it is.
+than the expression inferred from. Eventually, the result of every inference will be
+a identifier without any operators. When every formula in the tableau has had its inferences
+subjeined (all the formulas are used), the tableau is complete. The algorithm above may
+terminate before the tableau is fully populated, by finding contradictions in branch(es)
+before every formula is used.
+
+You can get an upper bound on the maximum branch depth of a tableau by counting operators
+in the original expression:
+
+* Negation counts for 1
+* Equivalence, implication, condjunction, disjunction count for 2
+
+The depth of the longest branch will be no greater than what you count.
 
 ## Parsing and Lexing
 
-See [README for package parser](https://github.com/bediger4000/tableaux-in-go/tree/master/src/parser)  for details on this topic.
+See [README for package parser](https://github.com/bediger4000/tableaux-in-go/tree/master/src/parser)  for details about internals.
 
 ### Parse Tree
 
