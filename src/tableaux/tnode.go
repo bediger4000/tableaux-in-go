@@ -1,4 +1,4 @@
-// Smullyan's Analytic Tableaux, as a Go type.
+// Package tableaux implements Smullyan's Analytic Tableaux, as a Go type.
 package tableaux
 
 // See:
@@ -15,6 +15,7 @@ import (
 	"node"
 )
 
+// Tnode instances make up a tableau, one subexpression per Tnode
 type Tnode struct {
 
 	// Set in New(), should never get changed
@@ -28,8 +29,8 @@ type Tnode struct {
 	Left   *Tnode
 	Right  *Tnode
 
-	Used          bool // Have interence(s) of this expression been subjoined to leaf nodes?
-	closed        bool // Does this expression contradict a predecessor in the tableau?
+	Used   bool // Have interence(s) of this expression been subjoined to leaf nodes?
+	closed bool // Does this expression contradict a predecessor in the tableau?
 
 	// Other nodes in tableau special to this one
 	Contradictory *Tnode
@@ -38,7 +39,7 @@ type Tnode struct {
 
 var serialNumber int
 
-// The only way to create a Tnode instance.
+// New should constitute the only way to create a Tnode instance.
 func New(tree *node.Node, sign bool, parent *Tnode) *Tnode {
 	var r Tnode
 
@@ -58,7 +59,7 @@ func New(tree *node.Node, sign bool, parent *Tnode) *Tnode {
 	return &r
 }
 
-// Find all unclosed leaf node(s) below the receiver in
+// FindUnclosedLeaf - Find all unclosed leaf node(s) below the receiver in
 // a tableau. Leaf might be marked "used" if it's just an identifier,
 // also this can return zero-len array if all leaf nodes marked closed
 func (n *Tnode) FindUnclosedLeaf() []*Tnode {
@@ -79,8 +80,8 @@ func (n *Tnode) FindUnclosedLeaf() []*Tnode {
 	return a
 }
 
-// Find an unused formula above an unclosed leaf node
-// by following the Tnode.Parent links up a branch.
+// FindTallestUnused finds a formula which has not had its inferences subjoined
+// above an unclosed leaf node by following the Tnode.Parent links up a branch.
 func (n *Tnode) FindTallestUnused() *Tnode {
 	var p *Tnode
 	var unused *Tnode
@@ -98,9 +99,10 @@ func (n *Tnode) FindTallestUnused() *Tnode {
 	return unused
 }
 
-// Try to find a contradiction to receiver Tnode instance n by following
-// Tnode.Parent links all the way up a branch of a tableau
-// Not recursive, so the receiver n is the expression possibly contradicted by
+// CheckForContradictions tries to find a contradiction to receiver Tnode
+// instance n by following Tnode.Parent links all the way up a branch of a
+// tableau Not recursive, so the receiver n is the expression possibly
+// contradicted by
 // element further back up the tableau branch.
 func (n *Tnode) CheckForContradictions() bool {
 	for p := n.Parent; p != nil; p = p.Parent {
@@ -113,7 +115,7 @@ func (n *Tnode) CheckForContradictions() bool {
 	return false
 }
 
-// Subjoin inferences of from to Tnode instance named parent.
+// AddInferences subjoins inferences of from to Tnode instance named parent.
 func (parent *Tnode) AddInferences(from *Tnode) {
 
 	if from.Tree.Op == lexer.IDENT {
@@ -257,9 +259,9 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 // with semantic irregularities causing some inorder and some postorder
 // operations.
 // The Tnode.Parent backlink can help in debugging.
-func (p *Tnode) graphTnode(w io.Writer) {
+func (n *Tnode) graphTnode(w io.Writer) {
 	sign := "F"
-	if p.Sign {
+	if n.Sign {
 		sign = "T"
 	}
 
@@ -267,68 +269,74 @@ func (p *Tnode) graphTnode(w io.Writer) {
 	// whose inferences got subjoined to all it's leaf nodes,
 	// and 'C' for the leaf node of a closed branch.
 	extra := ""
-	if p.Used {
+	if n.Used {
 		extra += "U"
 	}
-	if p.closed {
+	if n.closed {
 		extra += "C"
 	}
 
-	fmt.Fprintf(w, "n%p [label=\"%s: %s%s\"];\n", p, sign, p.Expression, ", "+extra)
+	fmt.Fprintf(w, "n%p [label=\"%s: %s%s\"];\n", n, sign, n.Expression, ", "+extra)
 	/*
-		if p.Parent != nil {
-			fmt.Fprintf(w, "n%p -> n%p;\n", p, p.Parent)
+		if n.Parent != nil {
+			fmt.Fprintf(w, "n%p -> n%p;\n", p, n.Parent)
 		}
 	*/
-	if p.Left != nil {
-		p.Left.graphTnode(w)
-		fmt.Fprintf(w, "n%p -> n%p;\n", p, p.Left)
+	if n.Left != nil {
+		n.Left.graphTnode(w)
+		fmt.Fprintf(w, "n%p -> n%p;\n", n, n.Left)
 	}
-	if p.Right != nil {
-		p.Right.graphTnode(w)
-		fmt.Fprintf(w, "n%p -> n%p;\n", p, p.Right)
+	if n.Right != nil {
+		n.Right.graphTnode(w)
+		fmt.Fprintf(w, "n%p -> n%p;\n", n, n.Right)
 	}
 }
 
-// Write GraphViz directed graph dot input to argument w io.Writer.
-func (p *Tnode) GraphTnode(w io.Writer) {
+// GraphTnode writes GraphViz directed graph dot input to argument w io.Writer.
+func (n *Tnode) GraphTnode(w io.Writer) {
 	fmt.Fprintf(w, "digraph g {\n")
-	p.graphTnode(w)
+	n.graphTnode(w)
 	fmt.Fprintf(w, "}\n")
 }
 
-// Append argument n *Tnode to the leaf node of receiver p in a branch of a tableau.
-// This assumes that there's just a linked list via Tnode.Left elements. Used
-// only in setting up the hypotheses for finding consequences of a list of
-// formulas, so just followin Tnode.Left works.
-func (p *Tnode) AppendLeaf(n *Tnode) {
+// AppendLeaf appends argument n *Tnode to the leaf node of receiver p in a
+// branch of a tableau.  This assumes that there's just a linked list via
+// Tnode.Left elements. Used only in setting up the hypotheses for finding
+// consequences of a list of formulas, so just following Tnode.Left works.
+func (n *Tnode) AppendLeaf(v *Tnode) {
 	var leaf *Tnode
-	for t := p; t != nil; t = t.Left {
+	for t := n; t != nil; t = t.Left {
 		leaf = t
 	}
-	leaf.Left = n
-	n.Parent = leaf
+	leaf.Left = v
+	v.Parent = leaf
 }
 
-// Shouldn't this just make Tnode match type Stringer?
-func (p *Tnode) PrintTnode() {
-	fmt.Printf("Tnode %p\n", p)
-	fmt.Printf("\ttree %p\n", p.Tree)
-	fmt.Printf("\t%v: %q\n", p.Sign, p.Expression)
-	fmt.Printf("\tUsed   %v\n", p.Used)
-	fmt.Printf("\tclosed %v\n", p.closed)
-	fmt.Printf("\tParent %p\n", p.Parent)
-	fmt.Printf("\tLeft   %p\n", p.Left)
-	fmt.Printf("\tRight  %p\n", p.Right)
+// PrintTnode writes a Tnode instance's elements to stdout
+// in a human readable form.
+func (n *Tnode) PrintTnode() {
+	fmt.Printf("Tnode %p\n", n)
+	fmt.Printf("\ttree %p\n", n.Tree)
+	fmt.Printf("\t%v: %q\n", n.Sign, n.Expression)
+	fmt.Printf("\tUsed   %v\n", n.Used)
+	fmt.Printf("\tclosed %v\n", n.closed)
+	fmt.Printf("\tParent %p\n", n.Parent)
+	fmt.Printf("\tLeft   %p\n", n.Left)
+	fmt.Printf("\tRight  %p\n", n.Right)
 
-	if p.Left != nil {
-		p.Left.PrintTnode()
+	if n.Left != nil {
+		n.Left.PrintTnode()
 	}
-	if p.Right != nil {
-		p.Right.PrintTnode()
+	if n.Right != nil {
+		n.Right.PrintTnode()
 	}
 }
 
+// PrintTableaux writes a human readable text representation
+// of a tableau on w io.Writer. It does a breadth-first traverse
+// of the tableau's tree of TNodes, except that it tries to follo
+// the Left pointer of a Tnode as far as it can before following
+// branches. Text representation reads better that way.
 func PrintTableaux(w io.Writer, root *Tnode) {
 	var queue []*Tnode
 
@@ -340,7 +348,7 @@ func PrintTableaux(w io.Writer, root *Tnode) {
 
 		fmt.Printf("\n")
 		for p != nil {
-			var inferenceNote string = ""
+			var inferenceNote string
 			if p.inferredFrom != nil {
 				inferenceNote = fmt.Sprintf(" (%d)", p.inferredFrom.LineNumber)
 			}

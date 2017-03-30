@@ -133,7 +133,7 @@ func evaluateExpression(n *node.Node, valuation map[string]bool) bool {
 }
 
 func printRow(identifiers []string, vals []bool, r bool) {
-	for idx, _ := range identifiers {
+	for idx := range identifiers {
 		spacer := " "
 		if !vals[idx] {
 			spacer = ""
