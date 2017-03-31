@@ -157,11 +157,11 @@ The algorithm is guaranteed to terminate. Each subjoined formula, the result of 
 inferences from a previously unused formula, has one logical operator (&, |, >, =, ~) fewer
 than the expression inferred from. Eventually, the result of every inference will be
 a identifier without any operators. When every formula in the tableau has had its inferences
-subjeined (all the formulas are used), the tableau is complete. The algorithm above may
+subjoined (all the formulas are used), the tableau is complete. The algorithm above may
 terminate before the tableau is fully populated, by finding contradictions in branch(es)
 before every formula is used.
 
-You can get an upper bound on the maximum branch depth of a tableau by counting operators
+You can get an upper bound on the maximum branch depth of a tableau by counting all operators
 in the original expression:
 
 * Negation counts for 1
@@ -194,6 +194,9 @@ believe that an analytic tableau consists of arrays of subexpressions of the pro
 logic formula to be proved. Smullyan was not a programmer, it seems, because a tableau is
 a binary tree of individual subexpressions. The sign part of an analytic tableau is attached
 to a subexpression, as is the notion of an unused formula, and whether a branch is closed or not.
+A finished tableau tree isn't a complete tree, doesn't have heap structure, and a lot of the
+interior nodes only have one child. I used the `Left` element of a `Tnode` for the child of
+those interior nodes with only one child.
 
     type Tnode struct {
         LineNumber int
@@ -221,12 +224,12 @@ to the node of a parse tree that corresponds to the tableau node itself. Subjoin
 to leaf nodes of a branch uses the principal connective of its pare tree pointer to decide
 how to subjoin (linearly or bifurcate), and the sign of the subjoined expressions.
 
-Typing `Tnode.Sign` as a Golang boolean is semantically obvious: the signs of expressions
+Haing the type of `Tnode.Sign` as a Golang boolean is semantically obvious: the signs of expressions
 in Smullyan's tableaux are 'T' or 'F', but internally, a program could use 0 and 1, or even
 two different strings. Checking two lines in a tableau (two nodes in a binary tree) for
 contradiction only involves non-equality of the `Sign` element, and string equality of the
 `Expression` element. A program could check the `Tree` elements for tree-equality, but since
-`tableaux.Print()` canonicalizes string representations of tableau binary trees, string equality
+the `tableaux.Print()` method canonicalizes string representations of tableau binary trees, string equality
 is sufficient.
 
 ## Software engineering notes
