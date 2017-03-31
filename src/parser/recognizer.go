@@ -6,10 +6,12 @@ import (
 )
 
 
+// Recognizer returns true if the lexer feeds it a propositional
+// logic expression, false otherwise.
 func (p *Parser) Recognizer() (bool) {
 	r := p.recognizeE()
 	if r {
-		q := p.Expect(lexer.EOL)
+		q := p.expect(lexer.EOL)
 		r = r && q
 	}
 	return r
@@ -27,7 +29,7 @@ func (p *Parser) recognizeE() (bool) {
 }
 
 func (p *Parser) recognizeP() (bool) {
-	var r bool = false
+	r := false
 	token, typ := p.lexer.Next()
 	switch typ {
 	case lexer.IDENT:
@@ -36,7 +38,7 @@ func (p *Parser) recognizeP() (bool) {
 	case lexer.LPAREN:
 		p.lexer.Consume()
 		r = p.recognizeE()
-		r = p.Expect(lexer.RPAREN) && r
+		r = p.expect(lexer.RPAREN) && r
 	case lexer.NOT:
 		p.lexer.Consume()
 		r = p.recognizeP()

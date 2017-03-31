@@ -7,12 +7,18 @@ import (
 	"node"
 )
 
+// Parser instances get used to do a parse of a single
+// logical expression. Since instances of Lexer have a
+// io.Reader or a string in them, Parser instances have
+// no idea what they're parsing from.
 type Parser struct {
 	lexer *lexer.Lexer
 }
 
 var nextOp [9]lexer.TokenType
 
+// New used to create a Parser instance, injecting
+// a prepared Lexer instance.
 func New(lxr *lexer.Lexer) *Parser {
 	var parser Parser
 	parser.lexer = lxr
@@ -23,10 +29,14 @@ func New(lxr *lexer.Lexer) *Parser {
 	return &parser
 }
 
+// Parse creates a parse tree in the form of a 
+// binary tree of pointers to node.Node, from
+// whatever source of text the Lexer instance
+// has in it.
 func (p *Parser) Parse() (*node.Node) {
 	root := p.parseProduction(lexer.EQUIV)
 	if root != nil {
-		q := p.Expect(lexer.EOL)
+		q := p.expect(lexer.EOL)
 		if !q {
 			root = nil
 		}
@@ -76,7 +86,7 @@ func (p *Parser) parseFactor(op lexer.TokenType) (*node.Node) {
 		p.lexer.Consume()
 		n = p.parseProduction(op)
 		if n != nil {
-			if !p.Expect(lexer.RPAREN) {
+			if !p.expect(lexer.RPAREN) {
 				fmt.Fprintf(os.Stderr, "Didn't find a right paren to match left parenthese\n")
 				n = nil
 			}
@@ -92,7 +102,7 @@ func (p *Parser) parseFactor(op lexer.TokenType) (*node.Node) {
 	return n
 }
 
-func (p *Parser) Expect(expectedType lexer.TokenType) (bool) {
+func (p *Parser) expect(expectedType lexer.TokenType) (bool) {
 	token, tokenType := p.lexer.Next()
 	if tokenType == expectedType {
 		p.lexer.Consume()

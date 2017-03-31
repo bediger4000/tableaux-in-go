@@ -9,6 +9,8 @@ import (
 	"unicode/utf8"
 )
 
+// Lexer instances give back lexemes (instances of TokenType)
+// on successive calls to lexer.Next()
 type Lexer struct {
 	fileName     string
 	fd           io.Reader
@@ -18,8 +20,13 @@ type Lexer struct {
 	needsRefresh bool
 }
 
+// TokenType - the "part of speech" of the propositional logic
+// token/lexeme the instance of Lexer just found. Exported because
+// Parser instances need to know, and these constants get used to
+// denote what kind of node a piece of a parse tree is.
 type TokenType int
 
+// All the lexemes that this program knows about.
 const (
 	NOT     TokenType = iota
 	AND     TokenType = iota
@@ -33,6 +40,9 @@ const (
 	EOF     TokenType = iota
 )
 
+// NewFromFile creates a lexer that reads text from an io.Reader 
+// when finding lexemes. The io.Reader comes from a file, or from
+// an instance of bytes.Buffer, which just holds a string.
 func NewFromFile(file io.Reader) *Lexer {
 	var z Lexer
 	z.fileName = "stdin"
@@ -43,6 +53,8 @@ func NewFromFile(file io.Reader) *Lexer {
 	return &z
 }
 
+// NewFromFileName conveniently gives back a pointer to a Lexer
+// where the Lexer's io.Reader comes from the named file.
 func NewFromFileName(fileName string) *Lexer {
 	fd, err := os.Open(fileName)
 	if err != nil {
@@ -53,7 +65,7 @@ func NewFromFileName(fileName string) *Lexer {
 	return z
 }
 
-// Next() actually calls lexer.nextToken() if it needs to,
+// Next actually calls lexer.nextToken() if it needs to,
 // rather than having Consume() actually fetch the next token.
 // This allows higher level code to call lexer.Consume() and
 // not have it hang if it reads from stdin or something.
@@ -65,6 +77,9 @@ func (p *Lexer) Next() (string, TokenType) {
 	return p.currentToken, p.currentType
 }
 
+// Consume called by instances of Parse to communicate that
+// Parser has used the current token, and will call for the next
+// token shortly.
 // Just set a flag to actually refresh on subsequent call to Next():
 // prevent possible hangs. Consume() doesn't really need to fetch
 // the next token, so if it's not available (pipe or stdin), this
@@ -118,8 +133,10 @@ func (p *Lexer) nextToken() (string, TokenType) {
 	return token, typ
 }
 
+// TokenName returns a human-understandable string
+// text reprsentation of the TokenType value you give it.
 func TokenName(t TokenType) string {
-	var r string = "unknown"
+	r := "unknown"
 	switch t {
 	case LPAREN:
 		r = "LPAREN"
@@ -185,6 +202,8 @@ func plSplitter(data []byte, atEOF bool) (advance int, token []byte, err error) 
 	return
 }
 
+// BinaryOperator returns true if you pass it one of the
+// binary infix propositional logic connectives.
 func BinaryOperator(t TokenType) bool {
 	switch t {
 	case AND, OR, IMPLIES, EQUIV:
