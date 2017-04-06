@@ -98,7 +98,7 @@ whether or not the final expression is a logical consequence of the other expres
 The following checks whether `x > ~y` is a logical conseqeunce 
 of `(x & y) > z` and `(x & y) > ~z`
 
-You might see this written in a book as: (x &#8743; y) &#8835; z, (x &#8743; y) &#8835; &#8764;z &#8870; x &#8835 &8764;y
+You might see this written in a book as: (x &#8743; y) &#8835; z, (x &#8743; y) &#8835; &#8764;z &#8870; x &#8835; &#8764;y
 
 	$ ./tableaux '(x&y)>z' '(x&y)>~z' 'x>~y'
 	Hypothesis: "(x & y) > z"
