@@ -88,6 +88,8 @@ a tautology or not.
 
 Called with more than one propositional logic expression, `tableaux` proves
 whether or not the final expression is a logical consequence of the other expressions.
+The following checks whether `b` is a logical consequence of `a`, and `a > b`, which
+might be written like this in a booK; a, a &sup; b &#8870; b .
 
     $ ./tableaux 'a' 'a>b' 'b'
     Hypothesis: "a"
@@ -221,7 +223,7 @@ for a human. Because the proof procedure checks for contractions with previous s
 a tableau branch, a node has to have a link back to its "parent" in the tableau. Only the root
 node of a tableau's binary tree has a nil value for `Parent`. Each node in a tableau keeps a pointer
 to the node of a parse tree that corresponds to the tableau node itself. Subjoining inferences
-to leaf nodes of a branch uses the principal connective of its pare tree pointer to decide
+to leaf nodes of a branch uses the principal connective of its parse tree pointer to decide
 how to subjoin (linearly or bifurcate), and the sign of the subjoined expressions.
 
 Haing the type of `Tnode.Sign` as a Golang boolean is semantically obvious: the signs of expressions
