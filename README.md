@@ -39,6 +39,7 @@ In this case, parentheses need to exist. The expression `a > b & b > a` gets par
 
 ## Building the program
 
+    $ export GOPATH=$PWD  # Or something equivalent
     $ make tableaux
 
 ## Using the program
@@ -86,29 +87,44 @@ a tautology or not.
     Formula is a tautology
     */
 
+Line 0 holds the expression to be proved a tautology signed false.
+Lines 1 and 2 are inferences of line 0, marked "(0)". Sunjoined inteferences of line 1 cause
+a branch, line 3 on the left, line 4 on the right. Lines 3 and 4 are marked "(1)".
+Leaf nodes that close a branch have the line they contradict. Line 10 closes a branch,
+it's an inference of line 7 and it contradicts line 8.
+
 Called with more than one propositional logic expression, `tableaux` proves
 whether or not the final expression is a logical consequence of the other expressions.
-The following checks whether `b` is a logical consequence of `a`, and `a > b`, which
-might be written like this in a booK; a, a &sup; b &#8870; b .
+The following checks whether `x > ~y` is a logical conseqeunce 
+of `(x & y) > z` and `(x & y) > ~z`
 
-    $ ./tableaux 'a' 'a>b' 'b'
-    Hypothesis: "a"
-    Hypothesis: "a > b"
-    Consequence: "b"
-    /*
-    
-    0. true: a
-    1. true: a > b
-    2. false: b
-       3 left, 4 right
-    
-    3. false: a (1) contradicts 0
-    
-    
-    4. true: b (1) contradicts 2
-    
-    b is a logical consequence of hypotheses
-    */
+You might see this written in a book as: (x &#8743; y) &#8835; z, (x &#8743; y) &#8835; &#8764;z &#8870; x &#8835 &8764;y
+
+	$ ./tableaux '(x&y)>z' '(x&y)>~z' 'x>~y'
+	Hypothesis: "(x & y) > z"
+	Hypothesis: "(x & y) > ~z"
+	Consequence: "x > ~y"
+	/*
+
+	0. true: (x & y) > z
+	1. true: (x & y) > ~z
+	2. false: x > ~y
+	   3 left, 4 right
+
+	3. false: x & y (0)
+	   5 left, 6 right
+
+	...
+
+	21. false: x (5) contradicts 9
+
+
+	22. false: y (5)
+	23. true: y (10) contradicts 22
+
+	x > ~y is a logical consequence of hypotheses
+	*/
+
 
 
 ## Proof Procedure
