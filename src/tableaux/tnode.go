@@ -181,6 +181,28 @@ func (parent *Tnode) alphaInference(from *Tnode) {
 	}
 }
 
+// Material implication causes a special case: F: p>q means that T:p and
+// F:q get subjoined, preventing the general alpha-type code above from
+// working.
+func (parent *Tnode) implicationSpecialInference(from *Tnode) {
+	parent.Left = New(from.Tree.Left, true, parent)
+	parent.Left.inferredFrom = from
+	if !parent.Left.CheckForContradictions() {
+
+		parent.Left.Left = New(from.Tree.Right, false, parent.Left)
+		parent.Left.Left.inferredFrom = from
+		parent.Left.Left.CheckForContradictions()
+	}
+}
+
+func (parent *Tnode) negationInference(from *Tnode) {
+	immediate := New(from.Tree.Left, !from.Sign, parent)
+	immediate.inferredFrom = from
+	parent.Left = immediate
+
+	parent.Left.CheckForContradictions()
+}
+
 // AddInferences subjoins inferences of from to Tnode instance named parent.
 func (parent *Tnode) AddInferences(from *Tnode) {
 
@@ -220,11 +242,7 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 	// keeps the branch linear for as long as possible.
 
 	if from.Tree.Op == lexer.NOT {
-		immediate := New(from.Tree.Left, !from.Sign, parent)
-		immediate.inferredFrom = from
-		parent.Left = immediate
-
-		parent.Left.CheckForContradictions()
+		parent.negationInference(from)
 		return
 	}
 
@@ -233,18 +251,10 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 		return
 	}
 
-	// Material implication causes a special case: F: p>q means that T:p and F:q get subjoined,
-	// preventing the general alpha-type code above from working.
+	// Material implication alpha inference needs to short-circuit
+	// subjoining one of the two terms in some cases.
 	if from.Tree.Op == lexer.IMPLIES && from.Sign == false {
-		parent.Left = New(from.Tree.Left, true, parent)
-		parent.Left.inferredFrom = from
-		if !parent.Left.CheckForContradictions() {
-
-			parent.Left.Left = New(from.Tree.Right, false, parent.Left)
-			parent.Left.Left.inferredFrom = from
-			parent.Left.Left.CheckForContradictions()
-		}
-
+		parent.implicationSpecialInference(from)
 		return
 	}
 
