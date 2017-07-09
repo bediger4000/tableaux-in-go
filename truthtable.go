@@ -22,8 +22,7 @@ func main() {
 
 	psr := parser.New(lxr)
 
-	var root *node.Node
-	root = psr.Parse()
+	root := psr.Parse()
 
 	printTruthTable(root)
 

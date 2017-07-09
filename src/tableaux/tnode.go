@@ -161,7 +161,7 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 	}
 
 	// Not actually a beta-type, and Smullyan probably would seems rather
-	// define equivalance as an abbreviation. It does create a new bifurcation
+	// define equivalence as an abbreviation. It does create a new bifurcation
 	// in a branch, however.
 	if from.Tree.Op == lexer.EQUIV {
 
