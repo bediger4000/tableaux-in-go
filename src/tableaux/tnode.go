@@ -115,6 +115,72 @@ func (n *Tnode) CheckForContradictions() bool {
 	return false
 }
 
+func (parent *Tnode) betaInference(from *Tnode) {
+	immediate := New(from.Tree.Left, from.Sign, parent)
+	parent.Left = immediate
+	immediate.inferredFrom = from
+
+	immediate.CheckForContradictions()
+
+	immediate2 := New(from.Tree.Right, from.Sign, parent)
+	parent.Right = immediate2
+	immediate2.inferredFrom = from
+
+	immediate2.CheckForContradictions()
+}
+
+func (parent *Tnode) equivalenceInference(from *Tnode) {
+	var sign1, sign2, sign3, sign4 bool
+	if from.Sign == true {
+		sign1, sign2, sign3, sign4 = true, true, false, false
+	} else {
+		sign1, sign2, sign3, sign4 = true, false, false, true
+	}
+
+	immediate1 := New(from.Tree.Left, sign1, parent)
+	parent.Left = immediate1
+	immediate1.inferredFrom = from
+
+	if !immediate1.CheckForContradictions() {
+
+		immediate2 := New(from.Tree.Right, sign2, immediate1)
+		immediate1.Left = immediate2
+		immediate2.inferredFrom = from
+
+		immediate2.CheckForContradictions()
+	}
+
+	immediate3 := New(from.Tree.Left, sign3, parent)
+	parent.Right = immediate3
+	immediate3.inferredFrom = parent
+
+	if !immediate3.CheckForContradictions() {
+
+		immediate4 := New(from.Tree.Right, sign4, immediate3)
+		immediate4.inferredFrom = parent
+		immediate3.Left = immediate4
+
+		immediate4.CheckForContradictions()
+	}
+}
+
+func (parent *Tnode) alphaInference(from *Tnode) {
+	immediate := New(from.Tree.Left, from.Sign, parent)
+	immediate.inferredFrom = from
+	parent.Left = immediate
+
+	// Check 1st inference for contradictions, don't bother subjoining 2nd inference
+	// if 1st one has a contradction and closes the branch.
+	if !immediate.CheckForContradictions() {
+
+		immediate2 := New(from.Tree.Right, from.Sign, immediate)
+		immediate2.inferredFrom = from
+		immediate.Left = immediate2
+
+		immediate2.CheckForContradictions()
+	}
+}
+
 // AddInferences subjoins inferences of from to Tnode instance named parent.
 func (parent *Tnode) AddInferences(from *Tnode) {
 
@@ -128,76 +194,23 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 	// By doing beta-type, bifurcating inferences first, branches are made
 	// linearly as long as possible.
 
+	// Did two calls to betaInference() to avoid unweildy,
+	// unreadable conditions on the "if"
 	if (from.Tree.Op == lexer.AND && from.Sign == false) || (from.Tree.Op == lexer.OR && from.Sign == true) {
-		immediate := New(from.Tree.Left, from.Sign, parent)
-		parent.Left = immediate
-		immediate.inferredFrom = from
-
-		immediate.CheckForContradictions()
-
-		immediate2 := New(from.Tree.Right, from.Sign, parent)
-		parent.Right = immediate2
-		immediate2.inferredFrom = from
-
-		immediate2.CheckForContradictions()
-
+		parent.betaInference(from)
 		return
 	}
 
 	if from.Tree.Op == lexer.IMPLIES && from.Sign == true {
-		immediate := New(from.Tree.Left, false, parent)
-		parent.Left = immediate
-		immediate.inferredFrom = from
-
-		immediate.CheckForContradictions()
-
-		immediate2 := New(from.Tree.Right, true, parent)
-		parent.Right = immediate2
-		immediate2.inferredFrom = from
-
-		immediate2.CheckForContradictions()
-
+		parent.betaInference(from)
 		return
 	}
 
-	// Not actually a beta-type, and Smullyan probably would seems rather
-	// define equivalence as an abbreviation. It does create a new bifurcation
-	// in a branch, however.
+	// Not actually a beta-type, and Smullyan probably would rather
+	// define equivalence as an abbreviation. It does create a new
+	// bifurcation in a branch, however.
 	if from.Tree.Op == lexer.EQUIV {
-
-		var sign1, sign2, sign3, sign4 bool
-		if from.Sign == true {
-			sign1, sign2, sign3, sign4 = true, true, false, false
-		} else {
-			sign1, sign2, sign3, sign4 = true, false, false, true
-		}
-
-		immediate1 := New(from.Tree.Left, sign1, parent)
-		parent.Left = immediate1
-		immediate1.inferredFrom = from
-
-		if !immediate1.CheckForContradictions() {
-
-			immediate2 := New(from.Tree.Right, sign2, immediate1)
-			immediate1.Left = immediate2
-			immediate2.inferredFrom = from
-
-			immediate2.CheckForContradictions()
-		}
-
-		immediate3 := New(from.Tree.Left, sign3, parent)
-		parent.Right = immediate3
-		immediate3.inferredFrom = parent
-
-		if !immediate3.CheckForContradictions() {
-
-			immediate4 := New(from.Tree.Right, sign4, immediate3)
-			immediate4.inferredFrom = parent
-			immediate3.Left = immediate4
-
-			immediate4.CheckForContradictions()
-		}
-
+		parent.equivalenceInference(from)
 		return
 	}
 
@@ -216,21 +229,7 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 	}
 
 	if (from.Tree.Op == lexer.AND && from.Sign == true) || (from.Tree.Op == lexer.OR && from.Sign == false) {
-		immediate := New(from.Tree.Left, from.Sign, parent)
-		immediate.inferredFrom = from
-		parent.Left = immediate
-
-		// Check 1st inference for contradictions, don't bother subjoining 2nd inference
-		// if 1st one has a contradction and closes the branch.
-		if !immediate.CheckForContradictions() {
-
-			immediate2 := New(from.Tree.Right, from.Sign, immediate)
-			immediate2.inferredFrom = from
-			immediate.Left = immediate2
-
-			immediate2.CheckForContradictions()
-		}
-
+		parent.alphaInference(from)
 		return
 	}
 
@@ -334,7 +333,7 @@ func (n *Tnode) PrintTnode() {
 
 // PrintTableaux writes a human readable text representation
 // of a tableau on w io.Writer. It does a breadth-first traverse
-// of the tableau's tree of TNodes, except that it tries to follo
+// of the tableau's tree of Tnodes, except that it tries to follo
 // the Left pointer of a Tnode as far as it can before following
 // branches. Text representation reads better that way.
 func PrintTableaux(w io.Writer, root *Tnode) {
