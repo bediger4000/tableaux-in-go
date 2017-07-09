@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"lexer"
 	"log"
@@ -8,7 +9,6 @@ import (
 	"os"
 	"parser"
 	"sort"
-	"bytes"
 )
 
 func main() {

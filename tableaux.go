@@ -39,13 +39,13 @@ func main() {
 
 	for idx, expression := range expressions {
 		var lxr *lexer.Lexer
-		expr := bytes.NewBufferString(expression+"\n")  // parser.Parser needs to recognize end-of-line
+		expr := bytes.NewBufferString(expression + "\n") // parser.Parser needs to recognize end-of-line
 		lxr = lexer.NewFromFile(expr)
 		psr := parser.New(lxr)
 		tree := psr.Parse()
 		fmt.Printf("%s: %q\n", denotation, node.ExpressionToString(tree))
 		trees = append(trees, tree)
-		if idx == expressionCount - 2 {
+		if idx == expressionCount-2 {
 			denotation = "Consequence"
 		}
 	}
@@ -59,18 +59,18 @@ func main() {
 		// logical consequence - all signed T except that last one F.
 		tblx.Sign = true
 		for _, tree := range trees[1:] {
-			finalFormula = tableaux.New(tree, true, nil)  // All signed T
+			finalFormula = tableaux.New(tree, true, nil) // All signed T
 			tblx.AppendLeaf(finalFormula)
 		}
-		finalFormula.Sign = false  // Except final one, signed F
+		finalFormula.Sign = false // Except final one, signed F
 	} else {
 		// Single expression. Subjoin its own inferences.
 		tblx.AddInferences(tblx)
 		tblx.Used = true
 	}
-	
-	tautological := false  // The answer we're looking for.
-	foundUnused  := true   // Found a formula with no previously subjoined inferences
+
+	tautological := false // The answer we're looking for.
+	foundUnused := true   // Found a formula with no previously subjoined inferences
 
 	for foundUnused {
 		unclosedLeaves := tblx.FindUnclosedLeaf()

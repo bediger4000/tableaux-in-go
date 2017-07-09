@@ -3,8 +3,8 @@ package parser
 import (
 	"fmt"
 	"lexer"
-	"os"
 	"node"
+	"os"
 )
 
 // Parser instances get used to do a parse of a single
@@ -29,11 +29,11 @@ func New(lxr *lexer.Lexer) *Parser {
 	return &parser
 }
 
-// Parse creates a parse tree in the form of a 
+// Parse creates a parse tree in the form of a
 // binary tree of pointers to node.Node, from
 // whatever source of text the Lexer instance
 // has in it.
-func (p *Parser) Parse() (*node.Node) {
+func (p *Parser) Parse() *node.Node {
 	root := p.parseProduction(lexer.EQUIV)
 	if root != nil {
 		q := p.expect(lexer.EOL)
@@ -52,7 +52,7 @@ func (p *Parser) Parse() (*node.Node) {
 // for the next function to call, and the condition on the for-loop.
 // Generalize all 4 of the parseNonterminal() methods into one method.
 
-func (p *Parser) parseProduction(op lexer.TokenType ) (*node.Node) {
+func (p *Parser) parseProduction(op lexer.TokenType) *node.Node {
 
 	nextProduction := p.parseProduction
 	if op == lexer.AND {
@@ -60,7 +60,7 @@ func (p *Parser) parseProduction(op lexer.TokenType ) (*node.Node) {
 	}
 
 	no := nextOp[op]
-	newNode := nextProduction(no)  // Weird that this works.
+	newNode := nextProduction(no) // Weird that this works.
 	if newNode != nil {
 		for _, typ := p.lexer.Next(); typ == op; _, typ = p.lexer.Next() {
 			p.lexer.Consume()
@@ -73,7 +73,7 @@ func (p *Parser) parseProduction(op lexer.TokenType ) (*node.Node) {
 	return newNode
 }
 
-func (p *Parser) parseFactor(op lexer.TokenType) (*node.Node) {
+func (p *Parser) parseFactor(op lexer.TokenType) *node.Node {
 	var n *node.Node
 
 	token, typ := p.lexer.Next()
@@ -102,12 +102,12 @@ func (p *Parser) parseFactor(op lexer.TokenType) (*node.Node) {
 	return n
 }
 
-func (p *Parser) expect(expectedType lexer.TokenType) (bool) {
+func (p *Parser) expect(expectedType lexer.TokenType) bool {
 	token, tokenType := p.lexer.Next()
 	if tokenType == expectedType {
 		p.lexer.Consume()
 	} else {
-		fmt.Fprintf(os.Stderr, "Expected token type %s, found %s (%q)\n", lexer.TokenName(expectedType),  lexer.TokenName(tokenType),  token)
+		fmt.Fprintf(os.Stderr, "Expected token type %s, found %s (%q)\n", lexer.TokenName(expectedType), lexer.TokenName(tokenType), token)
 		return false
 	}
 	return true

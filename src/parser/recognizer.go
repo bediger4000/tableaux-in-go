@@ -5,10 +5,9 @@ import (
 	"log"
 )
 
-
 // Recognizer returns true if the lexer feeds it a propositional
 // logic expression, false otherwise.
-func (p *Parser) Recognizer() (bool) {
+func (p *Parser) Recognizer() bool {
 	r := p.recognizeE()
 	if r {
 		q := p.expect(lexer.EOL)
@@ -17,7 +16,7 @@ func (p *Parser) Recognizer() (bool) {
 	return r
 }
 
-func (p *Parser) recognizeE() (bool) {
+func (p *Parser) recognizeE() bool {
 	r := p.recognizeP()
 	if r {
 		for _, typ := p.lexer.Next(); lexer.BinaryOperator(typ); _, typ = p.lexer.Next() {
@@ -28,7 +27,7 @@ func (p *Parser) recognizeE() (bool) {
 	return r
 }
 
-func (p *Parser) recognizeP() (bool) {
+func (p *Parser) recognizeP() bool {
 	r := false
 	token, typ := p.lexer.Next()
 	switch typ {

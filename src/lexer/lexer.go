@@ -2,8 +2,8 @@ package lexer
 
 import (
 	"bufio"
-	"io"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"unicode/utf8"
@@ -40,7 +40,7 @@ const (
 	EOF     TokenType = iota
 )
 
-// NewFromFile creates a lexer that reads text from an io.Reader 
+// NewFromFile creates a lexer that reads text from an io.Reader
 // when finding lexemes. The io.Reader comes from a file, or from
 // an instance of bytes.Buffer, which just holds a string.
 func NewFromFile(file io.Reader) *Lexer {
@@ -70,7 +70,7 @@ func NewFromFileName(fileName string) *Lexer {
 // This allows higher level code to call lexer.Consume() and
 // not have it hang if it reads from stdin or something.
 func (p *Lexer) Next() (string, TokenType) {
-	if (p.needsRefresh) {
+	if p.needsRefresh {
 		p.currentToken, p.currentType = p.nextToken()
 		p.needsRefresh = false
 	}

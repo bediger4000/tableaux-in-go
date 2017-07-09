@@ -2,16 +2,16 @@ package main
 
 import (
 	"bytes"
-	"os"
 	"fmt"
 	"lexer"
+	"os"
 )
 
 func main() {
 	var lxr *lexer.Lexer
 	if len(os.Args) > 1 {
-        expr := bytes.NewBufferString(os.Args[1])
-        lxr = lexer.NewFromFile(expr)
+		expr := bytes.NewBufferString(os.Args[1])
+		lxr = lexer.NewFromFile(expr)
 	} else {
 		lxr = lexer.NewFromFile(os.Stdin)
 	}

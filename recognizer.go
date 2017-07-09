@@ -1,8 +1,8 @@
 package main
 
 import (
-	"lexer"
 	"fmt"
+	"lexer"
 	// "node"
 	"os"
 	"parser"
