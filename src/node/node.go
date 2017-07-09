@@ -102,13 +102,13 @@ func ExpressionToString(root *Node) string {
 	return sb.String()
 }
 
-func (n *Node) graphNode(w io.Writer) {
+func (p *Node) graphNode(w io.Writer) {
 
 	var label string
 
-	switch n.Op {
+	switch p.Op {
 	case lexer.IDENT:
-		label = n.Ident
+		label = p.Ident
 	case lexer.IMPLIES:
 		label = ">"
 	case lexer.AND:
@@ -121,22 +121,22 @@ func (n *Node) graphNode(w io.Writer) {
 		label = "~"
 	}
 
-	fmt.Fprintf(w, "n%p [label=\"%s\"];\n", n, label)
+	fmt.Fprintf(w, "n%p [label=\"%s\"];\n", p, label)
 
-	if n.Left != nil {
-		n.Left.graphNode(w)
-		fmt.Fprintf(w, "n%p -> n%p;\n", n, n.Left)
+	if p.Left != nil {
+		p.Left.graphNode(w)
+		fmt.Fprintf(w, "n%p -> n%p;\n", p, p.Left)
 	}
-	if n.Right != nil {
-		n.Right.graphNode(w)
-		fmt.Fprintf(w, "n%p -> n%p;\n", n, n.Right)
+	if p.Right != nil {
+		p.Right.graphNode(w)
+		fmt.Fprintf(w, "n%p -> n%p;\n", p, p.Right)
 	}
 }
 
 // GraphNode puts a dot-format text representation of
 // a parse tree on w io.Writer.
-func (n *Node) GraphNode(w io.Writer) {
+func (p *Node) GraphNode(w io.Writer) {
 	fmt.Fprintf(w, "digraph g {\n")
-	n.graphNode(w)
+	p.graphNode(w)
 	fmt.Fprintf(w, "}\n")
 }
