@@ -1,4 +1,4 @@
-all: truthtable
+all: truthtable tableaux
 
 tokentest: tokentest.go src/lexer/lexer.go
 	go build tokentest.go
@@ -10,11 +10,11 @@ parsetest: parsetest.go src/lexer/lexer.go src/parser/parser.go src/node/node.go
 	go build parsetest.go
 
 truthtable: truthtable.go src/lexer/lexer.go src/parser/parser.go src/node/node.go 
-	go build truthtable.go
+	export GOPATH=$$PWD; go build truthtable.go
 
 tableaux: tableaux.go src/lexer/lexer.go src/parser/parser.go src/node/node.go \
 	src/tableaux/tnode.go
-	go build tableaux.go
+	export GOPATH=$$PWD; go build tableaux.go
 
 # Need to have GraphViz installed for this to work.
 diagrams: tableaux parsetest
