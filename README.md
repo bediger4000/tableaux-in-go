@@ -1,6 +1,6 @@
 # Prove propositional logic tautologies via Smullyan's analytic tableaux method 
 
- [![Go Report Card](https://goreportcard.com/badge/github.com/evilsocket/dirsearch)](https://goreportcard.com/report/github.com/bediger4000/tableaux-in-go)
+ [![Go Report Card](https://goreportcard.com/badge/github.com/bediger4000/tableaux-in-go)](https://goreportcard.com/report/github.com/bediger4000/tableaux-in-go)
 
 You may also enjoy [another online prover that produces tableaux](http://www.umsu.de/logik/trees/)
 
