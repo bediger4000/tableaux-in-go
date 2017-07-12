@@ -115,6 +115,20 @@ func (n *Tnode) CheckForContradictions() bool {
 	return false
 }
 
+func (parent *Tnode) impliesBetaInference(from *Tnode) {
+	immediate := New(from.Tree.Left, false, parent)
+	parent.Left = immediate
+	immediate.inferredFrom = from
+
+	immediate.CheckForContradictions()
+
+	immediate2 := New(from.Tree.Right, true, parent)
+	parent.Right = immediate2
+	immediate2.inferredFrom = from
+
+	immediate2.CheckForContradictions()
+}
+
 func (parent *Tnode) betaInference(from *Tnode) {
 	immediate := New(from.Tree.Left, from.Sign, parent)
 	parent.Left = immediate
@@ -224,7 +238,7 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 	}
 
 	if from.Tree.Op == lexer.IMPLIES && from.Sign == true {
-		parent.betaInference(from)
+		parent.impliesBetaInference(from)
 		return
 	}
 
