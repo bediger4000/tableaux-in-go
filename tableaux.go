@@ -127,6 +127,4 @@ func main() {
 		defer fout.Close()
 		tblx.GraphTnode(fout)
 	}
-
-	os.Exit(0)
 }
