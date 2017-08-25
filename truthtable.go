@@ -24,9 +24,9 @@ func main() {
 
 	root := psr.Parse()
 
-	printTruthTable(root)
-
-	os.Exit(0)
+	if root != nil {
+		printTruthTable(root)
+	}
 }
 
 func printTruthTable(root *node.Node) {
