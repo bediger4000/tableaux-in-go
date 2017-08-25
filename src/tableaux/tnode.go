@@ -145,7 +145,7 @@ func (parent *Tnode) betaInference(from *Tnode) {
 
 func (parent *Tnode) equivalenceInference(from *Tnode) {
 	var sign1, sign2, sign3, sign4 bool
-	if from.Sign == true {
+	if from.Sign {
 		sign1, sign2, sign3, sign4 = true, true, false, false
 	} else {
 		sign1, sign2, sign3, sign4 = true, false, false, true
@@ -232,12 +232,12 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 
 	// Did two calls to betaInference() to avoid unweildy,
 	// unreadable conditions on the "if"
-	if (from.Tree.Op == lexer.AND && from.Sign == false) || (from.Tree.Op == lexer.OR && from.Sign == true) {
+	if (from.Tree.Op == lexer.AND && !from.Sign) || (from.Tree.Op == lexer.OR && from.Sign) {
 		parent.betaInference(from)
 		return
 	}
 
-	if from.Tree.Op == lexer.IMPLIES && from.Sign == true {
+	if from.Tree.Op == lexer.IMPLIES && from.Sign {
 		parent.impliesBetaInference(from)
 		return
 	}
@@ -260,14 +260,14 @@ func (parent *Tnode) AddInferences(from *Tnode) {
 		return
 	}
 
-	if (from.Tree.Op == lexer.AND && from.Sign == true) || (from.Tree.Op == lexer.OR && from.Sign == false) {
+	if (from.Tree.Op == lexer.AND && from.Sign) || (from.Tree.Op == lexer.OR && !from.Sign) {
 		parent.alphaInference(from)
 		return
 	}
 
 	// Material implication alpha inference needs to short-circuit
 	// subjoining one of the two terms in some cases.
-	if from.Tree.Op == lexer.IMPLIES && from.Sign == false {
+	if from.Tree.Op == lexer.IMPLIES && !from.Sign {
 		parent.implicationSpecialInference(from)
 		return
 	}
@@ -300,11 +300,7 @@ func (n *Tnode) graphTnode(w io.Writer) {
 	}
 
 	fmt.Fprintf(w, "n%p [label=\"%s: %s%s\"];\n", n, sign, n.Expression, ", "+extra)
-	/*
-		if n.Parent != nil {
-			fmt.Fprintf(w, "n%p -> n%p;\n", p, n.Parent)
-		}
-	*/
+
 	if n.Left != nil {
 		n.Left.graphTnode(w)
 		fmt.Fprintf(w, "n%p -> n%p;\n", n, n.Left)

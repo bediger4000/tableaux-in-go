@@ -62,16 +62,12 @@ func (p *Node) Print(w io.Writer) {
 	switch p.Op {
 	case lexer.IMPLIES:
 		oper = '>'
-		break
 	case lexer.AND:
 		oper = '&'
-		break
 	case lexer.OR:
 		oper = '|'
-		break
 	case lexer.EQUIV:
 		oper = '='
-		break
 	}
 	if oper != 0 {
 		fmt.Fprintf(w, " %c ", oper)

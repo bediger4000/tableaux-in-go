@@ -88,18 +88,22 @@ func (p *Lexer) Consume() {
 	p.needsRefresh = true
 }
 
-func (p *Lexer) nextToken() (string, TokenType) {
-
+func (p *Lexer) scan() bool {
 	if !p.scanner.Scan() {
 		err := p.scanner.Err()
 		if err != nil {
-			if err := p.scanner.Err(); err != nil {
-				fmt.Fprintf(os.Stderr, "Lexer reading %s: %s\n", p.fileName, err)
-				return err.Error(), EOF
-			}
-		} else {
-			return "", EOF
+			fmt.Fprintf(os.Stderr, "Lexer reading %s: %s\n", p.fileName, err)
 		}
+		return false
+	}
+
+	return true
+}
+
+func (p *Lexer) nextToken() (string, TokenType) {
+
+	if worked := p.scan(); !worked {
+		return "", EOF
 	}
 
 	token := p.scanner.Text()
