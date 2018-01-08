@@ -16,7 +16,7 @@ This program is based on chapters from three books by Smullyan:
 
 All three books have essentially the same explanation with slight variations.
 This project does signed tableaux. I'm amused by this method of proof. During the proof, you
-never assign a valuation to the propsitional identifers. Making inferences is based solely
+never assign a valuation to the propositional identifers. Making inferences is based solely
 on syntax and sign of a formula. It almost seems magical.
 
 The golang program `tableaux` supports these binary infix logical oparators:
