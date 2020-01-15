@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"lexer"
 	"log"
-	"node"
 	"os"
-	"parser"
-	"tableaux"
+
+	"tableaux-in-go/src/lexer"
+	"tableaux-in-go/src/node"
+	"tableaux-in-go/src/parser"
+	"tableaux-in-go/src/tableaux"
 )
 
 func main() {

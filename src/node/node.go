@@ -7,7 +7,8 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"lexer"
+
+	"tableaux-in-go/src/lexer"
 )
 
 // Node has all elements exported, everything reaches inside instances

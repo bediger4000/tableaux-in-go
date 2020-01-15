@@ -2,9 +2,10 @@ package parser
 
 import (
 	"fmt"
-	"lexer"
-	"node"
 	"os"
+
+	"tableaux-in-go/src/lexer"
+	"tableaux-in-go/src/node"
 )
 
 // Parser instances get used to do a parse of a single

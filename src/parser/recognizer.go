@@ -1,8 +1,9 @@
 package parser
 
 import (
-	"lexer"
 	"log"
+
+	"tableaux-in-go/src/lexer"
 )
 
 // Recognizer returns true if the lexer feeds it a propositional
