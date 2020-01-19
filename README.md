@@ -41,7 +41,6 @@ In this case, parentheses need to exist. The expression `a > b & b > a` gets par
 
 ## Building the program
 
-    $ export GOPATH=$PWD  # Or something equivalent
     $ make tableaux
 
 ## Using the program
