@@ -11,8 +11,9 @@ package tableaux
 import (
 	"fmt"
 	"io"
-	"lexer"
-	"node"
+
+	"tableaux-in-go/src/lexer"
+	"tableaux-in-go/src/node"
 )
 
 // Tnode instances make up a tableau, one subexpression per Tnode

@@ -3,12 +3,13 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"lexer"
 	"log"
-	"node"
 	"os"
-	"parser"
 	"sort"
+
+	"tableaux-in-go/src/lexer"
+	"tableaux-in-go/src/node"
+	"tableaux-in-go/src/parser"
 )
 
 func main() {
