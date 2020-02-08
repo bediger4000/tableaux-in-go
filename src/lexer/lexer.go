@@ -44,13 +44,14 @@ const (
 // when finding lexemes. The io.Reader comes from a file, or from
 // an instance of bytes.Buffer, which just holds a string.
 func NewFromFile(file io.Reader) *Lexer {
-	var z Lexer
-	z.fileName = "stdin"
-	z.fd = file
-	z.scanner = bufio.NewScanner(z.fd)
+	z := &Lexer{
+		fileName:     "stdin",
+		fd:           file,
+		scanner:      bufio.NewScanner(file),
+		needsRefresh: true,
+	}
 	z.scanner.Split(plSplitter)
-	z.needsRefresh = true
-	return &z
+	return z
 }
 
 // NewFromFileName conveniently gives back a pointer to a Lexer
@@ -112,29 +113,26 @@ func (p *Lexer) nextToken() (string, TokenType) {
 	// type the token had, but unless I use a package-level variable,
 	// I can't figure out how to communicate token type from plSplitter()
 	// through bufio.Scanner
-	var typ TokenType
 	switch token {
 	case "~":
-		typ = NOT
+		return token, NOT
 	case "(":
-		typ = LPAREN
+		return token, LPAREN
 	case ")":
-		typ = RPAREN
+		return token, RPAREN
 	case "&":
-		typ = AND
+		return token, AND
 	case "|":
-		typ = OR
+		return token, OR
 	case ">":
-		typ = IMPLIES
+		return token, IMPLIES
 	case "=":
-		typ = EQUIV
+		return token, EQUIV
 	case "\n":
-		typ = EOL
-	default:
-		typ = IDENT
+		return token, EOL
 	}
 
-	return token, typ
+	return token, IDENT
 }
 
 // TokenName returns a human-understandable string
