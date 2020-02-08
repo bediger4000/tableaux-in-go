@@ -42,22 +42,20 @@ var serialNumber int
 
 // New should constitute the only way to create a Tnode instance.
 func New(tree *node.Node, sign bool, parent *Tnode) *Tnode {
-	var r Tnode
+	r := &Tnode{
+		LineNumber: serialNumber,
+		Tree:       tree,
+		Parent:     parent,
+		Sign:       sign,
+		Expression: node.ExpressionToString(tree),
+	}
 
-	r.LineNumber = serialNumber
-	serialNumber++
-
-	r.Tree = tree
-	r.Used = false
 	if tree.Op == lexer.IDENT {
 		r.Used = true // No inferences to make from an identifier.
 	}
-	r.closed = false
-	r.Parent = parent
-	r.Sign = sign
-	r.Expression = node.ExpressionToString(r.Tree)
+	serialNumber++
 
-	return &r
+	return r
 }
 
 // FindUnclosedLeaf - Find all unclosed leaf node(s) below the receiver in
@@ -289,7 +287,7 @@ func (n *Tnode) graphTnode(w io.Writer) {
 		sign = "T"
 	}
 
-	// Append a string to the formula, inlucde 'U' for a formula
+	// Append a string to the formula, include 'U' for a formula
 	// whose inferences got subjoined to all it's leaf nodes,
 	// and 'C' for the leaf node of a closed branch.
 	extra := ""
