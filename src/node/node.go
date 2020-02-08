@@ -24,18 +24,16 @@ type Node struct {
 // NewOpNode creates interior nodes of a parse tree, which will
 // all have a &, ~, |, >, = operator associated.
 func NewOpNode(op lexer.TokenType) *Node {
-	var n Node
-	n.Op = op
-	return &n
+	return &Node{Op: op}
 }
 
 // NewIdentNode creates leaf nodes of a parse tree, which should all be
 // lexer.IDENT identifier nodes.
 func NewIdentNode(identifier string) *Node {
-	var n Node
-	n.Op = lexer.IDENT
-	n.Ident = identifier
-	return &n
+	return &Node{
+		Op:    lexer.IDENT,
+		Ident: identifier,
+	}
 }
 
 // Print puts a human-readable, nicely formatted string representation
@@ -44,7 +42,7 @@ func NewIdentNode(identifier string) *Node {
 // parenthesization, and the "~" (not) operator being a prefix.
 func (p *Node) Print(w io.Writer) {
 
-	if lexer.NOT == p.Op {
+	if p.Op == lexer.NOT {
 		fmt.Fprintf(w, "~")
 	}
 	if p.Left != nil {
