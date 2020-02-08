@@ -383,8 +383,7 @@ func PrintTableaux(w io.Writer, root *Tnode) {
 
 			if p.Left != nil && p.Right != nil {
 				fmt.Fprintf(w, "   %d left, %d right\n", p.Left.LineNumber, p.Right.LineNumber)
-				queue = append(queue, p.Left)
-				queue = append(queue, p.Right)
+				queue = append(append(queue, p.Left), p.Right)
 				p = nil
 			} else {
 				p = p.Left
