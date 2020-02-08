@@ -18,16 +18,18 @@ type Parser struct {
 
 var nextOp [9]lexer.TokenType
 
-// New used to create a Parser instance, injecting
-// a prepared Lexer instance.
-func New(lxr *lexer.Lexer) *Parser {
-	var parser Parser
-	parser.lexer = lxr
+func init() {
 	nextOp[int(lexer.EQUIV)] = lexer.IMPLIES
 	nextOp[int(lexer.IMPLIES)] = lexer.OR
 	nextOp[int(lexer.OR)] = lexer.AND
 	nextOp[int(lexer.AND)] = lexer.EQUIV
-	return &parser
+}
+
+// New used to create a Parser instance, injecting
+// a prepared Lexer instance.
+func New(lxr *lexer.Lexer) *Parser {
+
+	return &Parser{lexer: lxr}
 }
 
 // Parse creates a parse tree in the form of a
